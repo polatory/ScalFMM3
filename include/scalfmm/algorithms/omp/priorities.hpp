@@ -79,7 +79,7 @@ namespace scalfmm::algorithms::omp
     //    int _max_prio{0};
     //};
 
-    int scale_prio(int prio, std::size_t level)
+    inline int scale_prio(int prio, std::size_t level)
     {
       return prio+(level-2)*3;
     }
