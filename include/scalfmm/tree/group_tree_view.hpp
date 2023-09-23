@@ -182,7 +182,7 @@ namespace scalfmm::component
             {
                 auto dups{0};
                 auto target{*it};
-                while(*it == target && it != std::cend(vector_of_mortons))
+                while(it != std::cend(vector_of_mortons) && *it == target)
                 {
                     ++it;
                     ++dups;
