@@ -1,0 +1,54 @@
+default:
+  tags: ['docker']
+  image: registry.gitlab.inria.fr/solverstack/docker/distrib
+  before_script:
+    - wget https://github.com/Kitware/CMake/releases/download/v3.22.0/cmake-3.22.0-linux-x86_64.tar.gz
+    - tar xvf cmake-3.22.0-linux-x86_64.tar.gz
+    - export PATH="$PWD/cmake-3.22.0-linux-x86_64/bin/:$PATH"
+
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
+stages:
+  - build_experimental
+  - test_experimental
+
+build_experimental:
+  stage: build_experimental
+  artifacts:
+    name: scalfmm_build_exp
+    expire_in: 1 day
+    paths:
+      - build_exp/
+  script:
+    - mkdir build_exp && cd build_exp && cmake ..
+        -Dscalfmm_USE_MPI=OFF
+        -Dscalfmm_BUILD_EXAMPLES=ON
+        -Dscalfmm_BUILD_UNITS=ON
+        -Dscalfmm_BUILD_TOOLS=ON
+        -Dscalfmm_BUILD_CHECK=ON
+        -DCMAKE_VERBOSE_MAKEFILE=ON
+        -DCMAKE_C_COMPILER=gcc
+        -DCMAKE_CXX_COMPILER=g++
+    - make -j5 2>&1 |tee scalfmm-exp-build.log
+    - make examples 2>&1 |tee scalfmm-exp-examples-build.log
+    - make units 2>&1 |tee scalfmm-exp-units-build.log
+  only:
+    - experimental
+    - fix/3.0/openmp
+
+test_experimental:
+  stage: test_experimental
+  dependencies:
+    - build_experimental
+  artifacts:
+    name: scalfmm_exp_test
+    expire_in: 1 day
+    paths:
+      - build_exp/
+  script:
+    - (cd build_exp && OMP_NUM_THREADS=8 ctest --no-compress-output -VV -j 8 
+         -I 16,19,1 --repeat until-fail:10 --output-on-failure --stop-on-failure)
+  only:
+    - fix/3.0/openmp 
+

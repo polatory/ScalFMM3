@@ -1,0 +1,46 @@
+#ignore generated doc
+Doc/html/
+
+#ignore qt project file
+*.pro
+*.pro.*
+
+#ignore executables
+*.exe
+*.o
+
+#ignore eclipse file
+org.eclipse.core.resources.prefs
+.cproject
+.project
+*.json
+.vscode
+
+#ignore temporary files
+tmp/
+*.tmp
+*.temp
+*.temp.*
+*~
+*TAGS
+*#*#
+*nogit*
+*.swp
+
+#ignore build repository
+[bB]uild*
+docs/api
+#ignore latex temporary files
+*.out
+*.dvi
+*.toc
+*.log
+*.aux
+*.brf
+*.bbl
+*.blg
+*.synctex.*
+*_latexmk
+*.fls
+*-converted-*
+

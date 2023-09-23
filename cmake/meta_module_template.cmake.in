@@ -1,0 +1,18 @@
+#
+# meta-module cmake
+# -----------------
+
+cmake_minimum_required (VERSION 3.15.0 FATAL_ERROR)
+
+project(${MODULE_NAME}-download)
+
+include(ExternalProject)
+ExternalProject_Add(
+    ${MODULE_NAME}
+    GIT_REPOSITORY ${MODULE_GIT_URL}
+    GIT_TAG ${MODULE_GIT_TAG}
+    CMAKE_COMMAND ${CMAKE_COMMAND}
+    CMAKE_GENERATOR "${CMAKE_GENERATOR}"
+    CMAKE_ARGS ${MODULE_CMAKE_ARGS}
+    INTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
+)
