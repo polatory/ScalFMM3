@@ -64,7 +64,7 @@ install(FILES "${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}ConfigVersion.cmake"
   DESTINATION lib/cmake/${CMAKE_PROJECT_NAME})
 
 foreach(file ${TOOLS_TO_INSTALL})
-    install(PROGRAMS "${CMAKE_BINARY_DIR}/tools/${CMAKE_BUILD_TYPE}/${file}"
+    install(PROGRAMS "${CMAKE_BINARY_DIR}/tools/${CMAKE_BUILD_TYPE}/${file}${CMAKE_EXECUTABLE_SUFFIX}"
     DESTINATION bin/)
 endforeach() ## build a CPack driven installer package
 # --------------------------------------

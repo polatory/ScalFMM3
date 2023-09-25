@@ -234,7 +234,7 @@ namespace scalfmm::list
         auto& component_symbolics = target.symbolics();
         // Iterators for going left and right
         auto right_group_it{group_begin};
-	long int number_of_groups{std::distance(group_begin, group_end)};
+	long long int number_of_groups{std::distance(group_begin, group_end)};
 	std::size_t going_right{group_index};
         bool found_interaction{false};
         int leaf_position{};
