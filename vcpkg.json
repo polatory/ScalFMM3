@@ -6,6 +6,10 @@
     {
       "name": "fftw3",
       "platform": "osx & arm64"
+    },
+    {
+      "name": "intel-mkl",
+      "platform": "(windows | linux | osx) & x64"
     }
   ]
 }
