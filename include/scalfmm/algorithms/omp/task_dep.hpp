@@ -65,14 +65,14 @@ namespace scalfmm::algorithms::omp
             //  Buffer for m2l optimization : we calculate the inverse fft on the fly and free memory.
             //  get the shape of the buffer used in the m2l pass (get it from the far field)
             //  and allocate it
-            if(omp_get_max_task_priority() < priorities::max)
-            {
-                std::cout << cpp_tools::colors::red
-                          << "WARNING the task priorities are not (fully) available. set OMP_MAX_TASK_PRIORITY to "
-                          << priorities::max + 1 << cpp_tools::colors::reset << std::endl;
-            }
+            // if(omp_get_max_task_priority() < priorities::max)
+            // {
+            //     std::cout << cpp_tools::colors::red
+            //               << "WARNING the task priorities are not (fully) available. set OMP_MAX_TASK_PRIORITY to "
+            //               << priorities::max + 1 << cpp_tools::colors::reset << std::endl;
+            // }
 
-            const auto op = tree_target.height() == 2 ? operators_to_proceed::p2p : op_in;
+            const auto op = tree_target.height() == 2 ? op_in & operators_to_proceed::p2p : op_in;
 
             if constexpr(options::has(s, options::timit))
             {

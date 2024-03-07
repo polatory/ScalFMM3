@@ -98,9 +98,9 @@ namespace scalfmm::algorithms
         }
         return s;
     };
-    void print(const unsigned int op) { std::cout << build_string(op); };
+    inline void print(const unsigned int op) { std::cout << build_string(op); };
 
-    void print(const operators_to_proceed op)
+    inline void print(const operators_to_proceed op)
     {
         switch(op)
         {

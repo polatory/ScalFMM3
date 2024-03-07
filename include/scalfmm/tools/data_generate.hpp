@@ -12,7 +12,7 @@
 #include <random>
 #include <vector>
 #include <cstdlib>
-// #include <numbers> // Checker f numbers exists
+#include <numbers>
 
 namespace scalfmm::tools
 {
@@ -108,7 +108,7 @@ namespace scalfmm::tools
 
         const auto seed{33};
         std::mt19937_64 gen(seed);
-        VALUE_T u{}, theta{}, twoPi{/*std::numbers::pi_v<VALUE_T>*/ M_PI * 2.0};
+        VALUE_T u{}, theta{}, twoPi{std::numbers::pi_v<VALUE_T> * 2.0};
         std::uniform_real_distribution<VALUE_T> dist(0.0, twoPi);
         for(std::size_t i = 0; i < data.size(); i += stride)
         {
@@ -138,7 +138,7 @@ namespace scalfmm::tools
         const auto seed{33};
         std::mt19937_64 gen(seed);
         std::uniform_real_distribution<VALUE_T> dist(0.0, 1.0);
-        VALUE_T u, v, theta, phi, sinPhi, twoPi = /*std::numbers::pi_v<VALUE_T>*/ M_PI * 2.0;
+        VALUE_T u, v, theta, phi, sinPhi, twoPi = std::numbers::pi_v<VALUE_T> * 2.0;
         for(std::size_t i = 0; i < data.size(); i += stride)
         {
             u = dist(gen);
@@ -206,8 +206,8 @@ namespace scalfmm::tools
         const int NN = 20;
         std::vector<int> bin(NN, 0);
         VALUE_T h = 2 * c / NN;
-        VALUE_T twoPi = /*std::numbers::pi_v<VALUE_T>*/ M_PI * 2.0;
-        VALUE_T pi = /*std::numbers::pi_v<VALUE_T>*/ M_PI;
+        VALUE_T twoPi = std::numbers::pi_v<VALUE_T> * 2.0;
+        VALUE_T pi = std::numbers::pi_v<VALUE_T>;
         std::cout << " call unifRandomPointsOnProlate with the a= " << a << " and c= " << c << std::endl;
         //
         const auto seed{33};
@@ -305,8 +305,8 @@ namespace scalfmm::tools
         const int NN = 20;
         std::vector<int> bin(NN, 0);
         VALUE_T h = 2 * c / NN;
-        VALUE_T twoPi = /*std::numbers::pi_v<VALUE_T>*/ M_PI * 2.0;
-        VALUE_T pi = /*std::numbers::pi_v<VALUE_T>*/ M_PI;
+        VALUE_T twoPi = std::numbers::pi_v<VALUE_T> * 2.0;
+        VALUE_T pi = std::numbers::pi_v<VALUE_T>;
         std::cout << " call unifRandomPointsOnProlate with the a= " << a << " and c= " << c << std::endl;
         //
         const auto seed{33};
@@ -387,8 +387,8 @@ namespace scalfmm::tools
     template<class CONTAINER_T, class VALUE_T>
     void nonuniform_point_on_prolate(const int stride, std::array<VALUE_T, 2>& radius, const double& density, CONTAINER_T& points)
     {
-        VALUE_T twoPi = /*std::numbers::pi_v<VALUE_T>*/ M_PI * 2.0;
-        VALUE_T pi = /*std::numbers::pi_v<VALUE_T>*/ M_PI;
+        VALUE_T twoPi = std::numbers::pi_v<VALUE_T> * 2.0;
+        VALUE_T pi = std::numbers::pi_v<VALUE_T>;
         const auto N = points.size() / stride;
         auto a = radius[0];
         auto b = radius[1];
@@ -584,4 +584,5 @@ namespace scalfmm::tools
     }
 
 }   // namespace scalfmm::tools
+
 #endif

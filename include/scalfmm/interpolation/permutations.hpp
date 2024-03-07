@@ -100,7 +100,7 @@ namespace scalfmm::interpolation
         {
             // here, we check the sign of each indices and shift it if negative
             // resulting to 0 if indices are all positive and 7 (in 3D) if all negative.
-            return (... | (std::size_t(std::signbit(is)) << Is));
+            return (... | (std::size_t(std::signbit(static_cast<double>(is))) << Is));
         }
     }   // namespace impl
 
