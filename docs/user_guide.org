@@ -1,0 +1,482 @@
+# -*- Coding: utf-8 -*-
+# -*- coding: org -*-
+#+title: ScalFMM 3.0 - Development guide
+#+Author: Olivier Coulaud
+#+STARTUP: overview indent inlineimages logdrawer
+
+#+PROPERTY: header-args :eval never-export
+
+#+OPTIONS: ^:{}
+#+LANGUAGE:    en
+#+TAGS: LIG(L) HOME(H) Europe(E) Blog(B) noexport(n) Stats(S)
+#+TAGS: Epistemology(E) Vulgarization(V) Teaching(T) R(R) OrgMode(O) Python(P)
+#+EXPORT_SELECT_TAGS: Blog
+#+OPTIONS:   H:4 num:t toc:t \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
+#+OPTIONS:   TeX:t LaTeX:nil skip:nil d:nil todo:t pri:nil tags:not-in-toc
+#+OPTIONS: toc:3
+#+LATEX_CLASS: article
+#+LATEX_CLASS_OPTIONS: [a4wpaper,11pt]
+#+LATEX_HEADER: \usepackage[english]{babel}
+#+LATEX_HEADER: \usepackage{a4wide,svg}
+#+LATEX_HEADER: \DeclareGraphicsExtensions{.pdf,.svg}
+#+EXPORT_SELECT_TAGS: export
+#+EXPORT_EXCLUDE_TAGS: noexport
+#+COLUMNS: %25ITEM %TODO %3PRIORITY %TAGS
+#+SEQ_TODO: TODO(t!) STARTED(s!) WAITING(w@) APPT(a!) | DONE(d!) CANCELLED(c!) DEFERRED(f!)
+#+SETUPFILE: https://compose.gitlabpages.inria.fr/include/compose-themes/theme-readtheorginria.setup
+In this document, we specify the different approaches to access, browse, modify ... different data structures of ScalFMM. For more details, you should refer to the documentation
+
+To generate the documentation, the cmake variable ~scalfmm_BUILD_DOC~ must be set to ~ON~.
+#+begin_src
+make sphinx
+open docs/sphinx/index.html
+#+end_src
+
+* Container
+
+** The particles
+
+The particle type is the entry point to store data in scalfmm. There are 4 parts available to store data.
+    - the position (array of size dimension)
+    - inputs  (array of size n)
+    - outputs  (array of size m)
+    - variables (a variadic tuple)
+
+      #+begin_src c++
+        using particle_type particle<float, 2, float, 1, float, 3, int> ;
+      #+end_src
+
+To fill the particle we proceed as follows
+
+#+begin_src c++
+        particle_type p;
+        // set the position
+        for(auto& e: p.position())
+        {
+            e = random_r();
+        }
+        // set the input values
+        for(auto& e: p.inputs())
+        {
+            e = random_r();
+        }
+        // set the output values
+        for(auto& e: p.outputs())
+        {
+            e = value_type(0.);
+        }
+        // add the variables
+        p.variables(idx);
+       // to display the particle
+         std::cout << p << '\n';
+#+end_src
+
+The variables() method of particle is a variadic method. The number of arguments of the method correspond to the number and type of variable in de particle type definition.?
+
+** container of particles: ~Container_particle~
+We can use either the STL vectors to store the particles or the ScalFMM container which is an array structure (SOA).
+
+
+
+   # *** Container_particle
+    
+The particles container allows you to store particles in a generic manner in a SOA container.
+The container contains 4 blocks
+     - the positions
+     - the input data
+     - the output data
+     - the variables
+The data (positions, inputs and outputs) are of the same type, the variables can have different types (float, int, ...).
+
+#+ATTR_LATEX: :scale 0.5 
+#+CAPTION: structure of the particle container
+[[./images/particles_container.svg]]
+
+First, we define the container type based on the particle type and allocate it.
+#+BEGIN_SRC c++
+using container_type = container::particle_container<particle_type>;
+// allocate 100 particles.
+constexpr std::size_t nb_particles{100};
+container_type container(nb_particles);
+#+END_SRC
+
+Second, to fill the container, The method ~insert_particle~ inserts a particle, $p$, at the idx position of the container
+#+BEGIN_SRC c++
+   container.insert_particle(idx, p);
+#+END_SRC
+
+Finally, we propose methods to update the different components of the particle located at position idx in the container:
+
+  - the positions:  inpos is either a type position or a tuple
+#+BEGIN_SRC c++
+   container.insert_position(idx,  inpos);
+#+END_SRC
+     - the input data: 
+     #+BEGIN_SRC c++
+   container.insert_inputs(idx, ininput);
+#+END_SRC
+     - the output data: 
+          #+BEGIN_SRC c++
+   container.insert_inputs(idx, inoutput);
+#+END_SRC
+     - the variables
+
+The main difference between std::vector and this container is the at() method.
+ In our container, at() returns a proxy_particle, whereas std::vector returns a reference to the particle. 
+
+** Block of particles
+    
+The particles inside a leaf are stored in a contiguous block. The organization of the particle data 
+ (position, inputs, outputs, variables) is similar to that of the container_particle described above.
+The following figure consider a particle in 2-dimension, with one input $q$, three outputs (the potential
+  $p$, and the forces $(f_x, f_y)$) and one variable.
+
+#+CAPTION: structure of the block of particles inside a group
+[[./images/block_container.svg]]
+
+The third particle shown in the figure is either a view or a particle. 
+- The view is called proxy_particle
+   and it is a tuple of references to the components of the considered particle inside the block.
+    With a proxy, we can easily change its values.  The ~proxy_type~ can be obtained either from the particle type or from the leaf.
+    #+BEGIN_SRC C++
+    using proxy_type = particle_source_type::proxy_type;
+     // or
+    auto proxy = tree_target_type::leaf_type::proxy_type ;
+    #+END_SRC
+    We also have a *const\_proxy\_type.
+
+- An iterator on the particle. Be careful, these are lazy iterators, they must be instantiated to be positioned
+    on the targeted particle.  The iterator is a tuple of iterators on the different components of the particle.
+
+To traverse the particle block, we have access to iterators that are positioned at the beginning or at the end of the particle block
+
+In addition, we offer quick access via pointers on the input and output component block
+  - on the position: ~ptr_on_position()~ return a pointer on the first coordinate of the first position inside the block
+  - on the input: ~ptr_on_input()~ return a pointer on the first input inside the block
+  - on the output: ~ptr_on_output()~ return a pointer on the first output 
+  
+  #+BEGIN_SRC C++
+      // get the number of particles
+        auto nb_particles = block.size() ;
+        auto ptr_pos_x = block.ptr_on_position();
+        // increment the pointer to access the second array of coordinate
+        auto ptr_pos_y = ptr_pos_x + nb_particles;
+        // get the pointeron the first outputs
+        auto ptr_potential = block.ptr_on_output();
+        // increment the pointer to access the first component of the force 
+        auto ptr_fx = ptr_potential + nb_particles;
+        // increment the pointer to access the second component of the force 
+        auto ptr_fy = ptr_fx + nb_particles;
+  #+END_SRC
+
+
+
+* The different iterators
+
+The Tree class provides iterators for accessing and traversing these components (leaves, cells).
+** Iterators on group of components
+ The tree provides two methods,  ~begin()~ and  ~end()~, which allow us to obtain iterators on components.
+ These methods return a tuple of iterators. The first concerns the iterator on the leaves, while the second
+ concerns the iterator on the start of the cell hierarchy.
+
+ The iterator for the leaf group vector is obtained by
+#+begin_src c++
+      auto begin_leaf_iterator = std::get<0>(tree.begin()) ;
+      auto end_leaf_iterator = std::get<0>(tree.end()) ;
+#+end_src
+whereas for the iterator on the cell group vector, the level must be specified. For example,
+for the leaf level, the iterators are obtained as follows
+#+begin_src c++
+    const auto leaf_level = tree.height() - 1 ;
+    auto begin_cell_iterator = std::get<1>(tree.begin()) +  leaf_level ;
+    auto end_cell_iterator = std::get<1>(tree.end()) +  leaf_level ;
+#+end_src
+
+#+begin_src c++
+            //
+            const auto top_level = this->box().is_periodic() ? 1 : 2;
+            // get the iterator on top_level4
+            auto cell_target_level_it = std::get<1>(this->begin()) + top_level;
+            //
+            for(int level = top_level; level < m_tree_height; ++level)
+            {
+            // iterators on the cells ath the current level
+            auto first_group = std::begin(*cell_target_level_it) ;
+            auto last_group = std::end(*cell_target_level_it);
+            // loop on the groups
+            for (grp : *cell_target_level_it);
+             {
+             ...
+            }
+        }
+#+end_src
+
+We also offer faster or easier access to components, as explained in the next two sections.
+*** leaf group iterators
+ We define two set of iterators. The first one access the whole set of group of leaves and their cont variants
+ We define two groups of iterators (and their const variants). The first accesses all leaf groups in the tree.
+ #+begin_src c++
+ inline auto begin_leaves() -> leaf_iterator_type;
+ inline auto end_leaves() -> leaf_iterator_type;
+#+end_src
+ The second set of integrators accesses the set of tree leaf groups managed by the processor. In the sequential
+ case, this group is identical to the first. In the parallel distributed case, the leaf group contains ghost leaf
+ groups, so this iterator returns only the first and last non-ghost leaf groups (groups managed by the process).
+ #+begin_src c++
+ inline auto begin_mine_leaves() -> leaf_iterator_type;
+ inline auto end_mine_leaves() -> leaf_iterator_type;
+#+end_src
+
+#+ATTR_LATEX: :scale 0.5
+#+CAPTION: Iterators on a vector of groups of components. In red the ghost groups.
+[[./images/container_iterators.svg]]
+*** cell group iterators
+
+The iterators defined for the leaves are extended for the cells and for the different levels of the tree.
+For ease of use, we specify the level to obtain either all cell groups or the cell groups managed by the process.
+#+begin_src c++
+inline auto begin_cells(const int& level) const -> cell_group_level_iterator_type ;
+inline auto end_cells(const int& level) const -> cell_group_level_iterator_type ;
+inline auto begin_mine_cells(const int& level) const -> cell_group_level_iterator_type ;
+inline auto end_mine_cells(const int& level) const -> cell_group_level_iterator_type ;
+#+end_src
+
+
+* The different ways to access to the particles in the tree
+
+** inside the leaf
+
+In the leaf, we have defined lazy iterators ~begin()~ and ~end()~ to easily traverse particles or components (position, inputs, outputs, variables).
+#+begin_src c++
+         // loop on the particles of the leaf
+        for(auto const p_tuple_ref: leaf)
+           {
+            // We construct a particle type for classical acces
+           const auto p = typename leaf_type::const_proxy_type(p_tuple_ref);
+
+
+        }
+#+end_src
+*** Another example
+Here we initialize all partciles outputs with random values
+#+begin_src c++
+    // get the begin and the end of the iterator on the outputs of the particle
+    auto outputs_begin = scalfmm::container::outputs_begin(leaf.particles());
+    auto outputs_end = scalfmm::container::outputs_end(leaf.particles());
+    // Loop on the outputs the ierator is a tuple
+    for(auto it = outputs_begin; it != outputs_end; ++it)
+        {
+          // set random values on all the outut of the current particle
+          scalfmm::meta::repeat([&gen, &dist](auto& v) { v = dist(gen); }, *it);
+        }
+#+end_src
+*** A more complex example.
+
+Imagine that the outputs are composed of a potential and a force (p, fx, fy, fz) and that we want to multiply the force by the value of the first.
+input.
+First we get a pointer, q, on the first inputs
+#+begin_src c++
+    // a lazy light iterator on the inputs of particle inside the container
+    auto inputs_begin_lazy = scalfmm::container::inputs_begin(leaf.particles());
+    // we dereference to evaluate teh lazy pointer
+    auto inputs_begin = *inputs_begin_lazy;
+    //  You get the first input value and you take
+    // its address in order to increment if
+    auto q = &std::get<0>(inputs_begin);
+#+end_src
+The variable ~inputs_begin_lazy~ is a ~light_tuple_iterator~ which is a sub tuple of an iterator of particles. This iterator consists of a tuple that points to the start of the inputs and an index to move to the correct position.  Finally, we get via std::get<0> the first element and we take its address.
+
+As for the outputs, we first define a sequence to access the force (position 1,2,3 in the outputs), then we iterate over the particles by incrementing the lazy pointers ~ìt~ and the pointer ~q~.
+#+begin_src c++
+    auto outputs_begin = scalfmm::container::outputs_begin(leaf.particles());
+    auto outputs_end = scalfmm::container::outputs_end(leaf.particles());
+    // construct a sequence to access directly to the force in the output
+    using range_force = scalfmm::meta::make_range_sequence<1, particle_type::outputs_size>;
+    // the outputs are [ p, fx,fy, fz] and we construct [ p, q*fx,q*fy, q*fz]
+    // where q is the first input of teh particle
+    for(auto it = outputs_begin; it != outputs_end; ++it, ++q)
+      {
+        // out =[ p, fx,fy, fz]
+        scalfmm::meta::repeat([q](auto& v) { v *= *q; },
+                               scalfmm::meta::sub_tuple(*it, range_force{})
+                              );
+      }
+#+end_src
+
+
+** From the tree
+
+To traverse the leaves of the tree and to access the particles of the leaves, we have three possibilities
+ 1. the for_each_leaf method which does not require any knowledge of the tree
+ 2. traverse the internal structure of the tree (groups/leaves/particles)
+ 3. Traversing the particle storage
+
+*** generic method
+The easiest solution is to traverse the leaves of the tree and access the leaf particles as explained in the previous section.
+#+begin_src c++
+
+component::for_each_leaf(std::cbegin(tree), std::cend(tree),
+                        [](auto const& leaf)
+                        {
+
+                          for(auto const particle_tuple_ref : leaf)
+                            {
+                               const auto p = typename leaf_type::const_proxy_type(particle_tuple_ref);
+
+                            }
+                        }
+#+end_src
+This is the easiest method, but cannot be parallelized efficiently (i.e., with a granularity larger than the leaf)
+
+*** method with knowledge of the tree structure
+The idea here is to traverse the internal structure of the tree. We start to browse the groups of leaves, then for each group the leaves and finally for each leaf the particles. In this approach, we don't know a priori the storage of the different objects.
+#+begin_src c++
+// loop on the group of the tree
+    for(auto const pg: tree.group_of_leaves())
+    {
+        // Loop on the leaf of thz group
+        for(auto const& leaf: pg->components())
+        {
+            // loop on the particle inside the leaf
+            for(auto const particle_tuple_ref: leaf)
+            {
+                auto p = typename Tree::leaf_type::const_proxy_type(particle_tuple_ref);
+
+            }
+        }
+    }
+#+end_src
+This method is slightly more efficient than the classical method and can be parallelized.
+
+*** method knowing the storage of particles
+We will use our knowledge of particle storage to be more efficient. In the tree version with views, the particles of a group of leaves are stored continuously in the tree. Moreover, we need to know the type of the particles to get the right pointers (this can be automated) to the different components of the particles (position, inputs, outputs, variables).
+#+begin_src c++
+// loop on the group of the tree
+    for(auto pg: tree.group_of_leaves())
+    {
+        //  std::cout << pg->storage() << "\n";
+        auto nb_particles = pg->storage().size();
+        // get the pointers of the different sets
+        // position 
+        auto ptr_pos_x = pg->storage().ptr_on_position();
+        auto ptr_pos_y = ptr_pos_x + nb_particles;
+        // inputs
+        auto ptr_potential = pg->storage().ptr_on_output();
+        // outputs 
+        auto ptr_potential = pg->storage().ptr_on_output();
+        auto ptr_fx = ptr_potential + nb_particles;
+        auto ptr_fy = ptr_fx + nb_particles;
+        // variables
+        auto ptr_var0 = reinterpret_cast<std::size_t*>(ptr_fz + nb_particles);
+
+        for(auto i = 0; i < nb_particles; ++i)
+        {
+
+        }
+    }   // end block
+#+end_src
+This is the most efficient method (x3 compared to the previous one) and can be parallelized.
+
+
+
+* Some useful fonctions
+
+** IO functions
+
+We propose several functions in the namesapce ~scalfmm::io~ to
+
+- Display  a leaf  ~print_leaf(leaf)~, we display symbolic information and the particles inside the leaf (in ~tree/utils.hpp~).
+- Display  a cell ~print_cell(cell)~, we display symbolic information and the multipole(s) and local(s) arrays inside the cell (in ~tree/utils.hpp~). 
+- Display a tuple in a formatted display (in ~utils/io_helpers.hpp~)
+#+begin_src C++
+  std::tuple<double, int> t(0.5, 3);
+  io::print()
+#+end_src
+
+the output is 
+#+begin_src EXAMPLE
+  [0.5, 3]
+#+end_src
+
+ - Display a particle directly through the flow operator
+
+** Some useful Meta fonctions
+*** the repeat function
+
+  The repeat function appli the lambda function to each element the object
+
+
+  Let's consider in this example that ~locals_iterator~ is an iterator tuple, the lambda function increments an element. The meta function will increment each element of the tuple
+  #+begin_src c++
+    meta::repeat([](auto& it) { ++it; }, locals_iterator);
+#+end_src
+
+
+*** ~for_each~ function
+
+  The ~for_each~ function appli the lambda function to each element the object.
+
+*** ~sub_tuple~ function
+
+This function builds a sub-tuple from a tuple and a sequence (see the more complex example).
+
+#+begin_src c++
+  scalfmm::meta::sub_tuple(tuple, sequence) ;
+#+end_src
+
+#+begin_src C++
+
+    using range_force = scalfmm::meta::make_range_sequence<1, 4>
+    auto outputs_begin = scalfmm::container::outputs_begin(leaf.particles());
+    auto it = outputs_begin ;
+
+    std::cout << "tuple: "; 
+    scalfmm::io::print(std::cout, *it);  
+    std::cout << std::endl;
+
+    // Construct the sub tuple
+    auto sub_it = scalfmm::meta::sub_tuple(*it, range_force{});
+
+    std::cout << "sub tuple: "; 
+    scalfmm::io::print(std::cout, sub_it);  
+    std::cout << std::endl;
+
+#+end_src
+
+#+begin_src C++
+tuple: [0.0648738, 0.910379, -0.85718, 0.248555]
+sub tuple: [0.910379, -0.85718, 0.248555]
+#+end_src
+** check the type of a variable at the compilation
+#+begin_src c++
+
+    for(auto const p_ref: leaf)
+    {
+        scalfmm::meta::td<decltype(p_ref)> t;
+     }
+#+end_src
+The error at the compilation is
+
+#+begin_src
+ error: 'scalfmm::meta::td<const std::tuple<double&, double&, double&, double&, long unsigned int&> > t' has incomplete type
+  147 |                                      meta::td<decltype(p_ref)> t;
+      |                                                                ^
+#+end_src
+The meta function is located in ~scalfmm/meta/utils.hpp~.
+
+
+
+* Parameter management
+
+To define and read the parameters of a program we use the Parser for Command Line options (~cl_parser~)
+ available on [[https://gitlab.inria.fr/compose/legacystack/cpp_tools][gitlab]]. The full documentation is 
+ [[https://gitlab.inria.fr/compose/legacystack/cpp_tools/-/blob/master/cl_parser/README.md][here]].
+
+For more details about the definition and use of a parameter, you can look at how they were
+ used in the files in the ~examples~, ~tools~ and ~check~ directories.
+  
+The following parameters are available in ~scalfmm/utils/parameters.hpp~
+ - files:  ~input_file~, ~output_file~
+ - tree: ~tree_height~, ~block_size~, ~extended_tree_height~
+ - approximation: ~order~
+ - parallelism  ~thread_count~
