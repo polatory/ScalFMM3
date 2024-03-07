@@ -14,6 +14,8 @@
 #include <cstdlib>
 // #include <numbers> // Checker f numbers exists
 
+#define M_PI 3.141592653589793
+
 namespace scalfmm::tools
 {
     /**
@@ -584,4 +586,7 @@ namespace scalfmm::tools
     }
 
 }   // namespace scalfmm::tools
+
+#undef M_PI
+
 #endif

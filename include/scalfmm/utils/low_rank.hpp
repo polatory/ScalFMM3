@@ -108,7 +108,7 @@ namespace scalfmm::low_rank
             // increment low-rank
             ++r;
         }
-        while(norm2uv > epsilon2 * norm2s);
+        while(norm2uv > epsilon2 * norm2s && r < max_r);
 
         auto UU = xt::eval(xt::view(U, xt::all(), xt::range(0,r)));
         auto VV = xt::eval(xt::view(V, xt::all(), xt::range(0,r)));

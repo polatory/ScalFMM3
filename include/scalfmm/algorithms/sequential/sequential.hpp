@@ -73,7 +73,7 @@ namespace scalfmm::algorithms::sequential
             {
                 scalfmm::list::sequential::build_m2l_interaction_list(tree_source, tree_target, neighbour_separation);
             }
-            const auto op = tree_target.height() == 2 ? operators_to_proceed::p2p : op_in;
+            const auto op = tree_target.height() == 2 ? op_in & operators_to_proceed::p2p : op_in;
 
             if((op & operators_to_proceed::p2m) == operators_to_proceed::p2m)
             {
