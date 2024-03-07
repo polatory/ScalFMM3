@@ -111,14 +111,14 @@ namespace scalfmm::algorithms
     *
     * @param op
     */
-    void print(const unsigned int op) { std::cout << build_string(op); };
+    inline void print(const unsigned int op) { std::cout << build_string(op); };
 
     /**
     * @brief prints the operator code.
     *
     * @param op
     */
-    void print(const operators_to_proceed op)
+    inline void print(const operators_to_proceed op)
     {
         switch(op)
         {

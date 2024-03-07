@@ -34,7 +34,7 @@ namespace scalfmm::algorithms::omp
     /**
     * @brief Scales the priority values according to the level.
     */
-    int scale_prio(int prio, std::size_t level) { return prio + (level - 2) * 3; }
+    inline int scale_prio(int prio, std::size_t level) { return prio + (level - 2) * 3; }
 }   // namespace scalfmm::algorithms::omp
 
 #endif   // SCALFMM_ALGORITHMS_OMP_PRIORITIES_HPP

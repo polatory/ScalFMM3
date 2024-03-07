@@ -1,0 +1,15 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "name": "scalfmm",
+  "version": "3.0.0",
+  "dependencies": [
+    {
+      "name": "fftw3",
+      "platform": "osx & arm64"
+    },
+    {
+      "name": "intel-mkl",
+      "platform": "(windows | linux | osx) & x64"
+    }
+  ]
+}

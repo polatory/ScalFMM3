@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <math.h>
+#include <numbers>
 #include <random>
 #include <vector>
 
@@ -106,7 +107,7 @@ namespace scalfmm::tools
 
         const auto seed{33};
         std::mt19937_64 gen(seed);
-        ValueType u{}, theta{}, twoPi{/*std::numbers::pi_v<ValueType>*/ M_PI * 2.0};
+        ValueType u{}, theta{}, twoPi{std::numbers::pi_v<ValueType> * 2.0};
         std::uniform_real_distribution<ValueType> dist(0.0, twoPi);
         for(std::size_t i = 0; i < data.size(); i += stride)
         {
@@ -136,7 +137,7 @@ namespace scalfmm::tools
         const auto seed{33};
         std::mt19937_64 gen(seed);
         std::uniform_real_distribution<ValueType> dist(0.0, 1.0);
-        ValueType u, v, theta, phi, sinPhi, twoPi = /*std::numbers::pi_v<ValueType>*/ M_PI * 2.0;
+        ValueType u, v, theta, phi, sinPhi, twoPi = std::numbers::pi_v<ValueType> * 2.0;
         for(std::size_t i = 0; i < data.size(); i += stride)
         {
             u = dist(gen);
@@ -205,8 +206,8 @@ namespace scalfmm::tools
         const int NN = 20;
         std::vector<int> bin(NN, 0);
         ValueType h = 2 * c / NN;
-        ValueType twoPi = /*std::numbers::pi_v<ValueType>*/ M_PI * 2.0;
-        ValueType pi = /*std::numbers::pi_v<ValueType>*/ M_PI;
+        ValueType twoPi = std::numbers::pi_v<ValueType> * 2.0;
+        ValueType pi = std::numbers::pi_v<ValueType>;
         std::cout << " call unifRandomPointsOnProlate with the a= " << a << " and c= " << c << std::endl;
         //
         const auto seed{33};
@@ -304,8 +305,8 @@ namespace scalfmm::tools
         const int NN = 20;
         std::vector<int> bin(NN, 0);
         ValueType h = 2 * c / NN;
-        ValueType twoPi = /*std::numbers::pi_v<ValueType>*/ M_PI * 2.0;
-        ValueType pi = /*std::numbers::pi_v<ValueType>*/ M_PI;
+        ValueType twoPi = std::numbers::pi_v<ValueType> * 2.0;
+        ValueType pi = std::numbers::pi_v<ValueType>;
         std::cout << " call unifRandomPointsOnProlate with the a= " << a << " and c= " << c << std::endl;
         //
         const auto seed{33};
@@ -388,8 +389,8 @@ namespace scalfmm::tools
     auto nonuniform_point_on_prolate(const int stride, std::array<ValueType, 2>& radius, const double& density,
                                      ContainerType& points) -> void
     {
-        ValueType twoPi = /*std::numbers::pi_v<ValueType>*/ M_PI * 2.0;
-        ValueType pi = /*std::numbers::pi_v<ValueType>*/ M_PI;
+        ValueType twoPi = std::numbers::pi_v<ValueType> * 2.0;
+        ValueType pi = std::numbers::pi_v<ValueType>;
         const auto N = points.size() / stride;
         auto a = radius[0];
         auto b = radius[1];
@@ -576,4 +577,5 @@ namespace scalfmm::tools
     }
 
 }   // namespace scalfmm::tools
+
 #endif

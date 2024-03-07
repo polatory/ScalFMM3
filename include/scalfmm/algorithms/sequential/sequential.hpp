@@ -93,7 +93,7 @@ namespace scalfmm::algorithms::sequential
                 }
             }
 
-            const auto op = target_tree.height() == 2 ? operators_to_proceed::p2p : op_in;
+            const auto op = target_tree.height() == 2 ? op_in & operators_to_proceed::p2p : op_in;
 
             // P2M pass
             if((op & operators_to_proceed::p2m) == operators_to_proceed::p2m)
