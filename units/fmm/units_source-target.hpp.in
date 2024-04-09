@@ -1,0 +1,271 @@
+#pragma once
+#cmakedefine TEST_DATA_FILES_PATH "@TEST_DATA_FILES_PATH@"
+
+#include <iostream>
+#include <string>
+#include <tuple>
+
+#include "scalfmm/container/particle.hpp"
+#include "scalfmm/container/particle_container.hpp"
+#include "scalfmm/container/point.hpp"
+#include <catch2/catch.hpp>
+#include <scalfmm/container/iterator.hpp>
+//
+//
+#include "scalfmm/meta/type_pack.hpp"
+//
+#include "scalfmm/matrix_kernels/laplace.hpp"
+#include "scalfmm/matrix_kernels/scalar_kernels.hpp"
+//
+#include "scalfmm/algorithms/fmm.hpp"
+#include "scalfmm/algorithms/full_direct.hpp"
+#include "scalfmm/interpolation/interpolation.hpp"
+#include "scalfmm/matrix_kernels/laplace.hpp"
+#include "scalfmm/matrix_kernels/scalar_kernels.hpp"
+#include "scalfmm/operators/fmm_operators.hpp"
+#include "scalfmm/operators/p2p.hpp"
+//
+// Tree
+#include "scalfmm/interpolation/grid_storage.hpp"
+#include "scalfmm/tree/box.hpp"
+#include "scalfmm/tree/cell.hpp"
+#include "scalfmm/tree/group_tree_view.hpp"
+#include "scalfmm/tree/io.hpp"
+#include "scalfmm/tree/leaf_view.hpp"
+
+//
+#include "scalfmm/meta/utils.hpp"
+#include "scalfmm/tools/fma_loader.hpp"
+
+#include "scalfmm/utils/compare_results.hpp"
+#include "scalfmm/utils/io_helpers.hpp"
+#include "scalfmm/utils/source_target.hpp"
+
+#include <cpp_tools/colors/colorized.hpp>
+#include <cpp_tools/timers/simple_timer.hpp>
+
+template<typename Tree>
+auto print_leaves(Tree const& tree) -> void
+{
+    scalfmm::component::for_each_leaf(std::cbegin(tree), std::cend(tree),
+                                      [&tree](auto& leaf) { scalfmm::io::print_leaf(leaf); });
+}
+template<typename Tree, typename Container>
+auto check_output(Container const& part, Tree const& tree)
+{
+    scalfmm::utils::accurater<
+      typename scalfmm::container::particle_traits<typename Container::value_type>::outputs_value_type>
+      error;
+    static constexpr std::size_t nb_out = Container::value_type::outputs_size;
+
+    scalfmm::component::for_each_leaf(std::cbegin(tree), std::cend(tree),
+                                      [&part, &error](auto& leaf)
+                                      {
+                                          for(auto const p_tuple_ref: leaf)
+                                          {
+                                              const auto& p = typename Tree::leaf_type::const_proxy_type(p_tuple_ref);
+                                              const auto& idx = std::get<0>(p.variables());
+                                              auto& output = p.outputs();
+                                              const auto output_ref = part.at(idx).outputs();
+                                              for(std::size_t i{0}; i < nb_out; ++i)
+                                              {
+                                                  error.add(output_ref.at(i), output.at(i));
+                                              }
+                                          }
+                                      });
+
+    return error;
+}
+
+template<typename Container>
+auto read_data(const std::string& filename)
+{
+    using container_type = Container;
+    using particle_type = typename Container::value_type;
+    using value_type = typename particle_type::position_value_type;
+    static constexpr std::size_t dimension{particle_type::dimension};
+    const bool verbose{false};
+
+    scalfmm::io::FFmaGenericLoader<value_type, dimension> loader(filename, verbose);
+    const auto width{loader.getBoxWidth()};
+    const auto center{loader.getBoxCenter()};
+    const std::size_t number_of_particles{loader.getNumberOfParticles()};
+
+    auto nb_val_to_red_per_part = loader.getNbRecordPerline();
+    // could be a problem for binary file (float double)
+    std::vector<value_type> values_to_read(nb_val_to_red_per_part);
+
+    container_type container(number_of_particles);
+
+    for(std::size_t idx = 0; idx < number_of_particles; ++idx)
+    {
+        loader.fillParticle(values_to_read.data(), nb_val_to_red_per_part);
+        particle_type p;
+        std::size_t ii{0};
+        for(auto& e: p.position())
+        {
+            e = values_to_read[ii++];
+        }
+        for(auto& e: p.inputs())
+        {
+            e = values_to_read[ii++];
+        }
+        // p.variables(values_to_read[ii++], idx, 1);
+        p.variables(idx);
+        container[idx] = p;
+    }
+    return std::make_tuple(container, center, width);
+}
+
+template<int dimension, typename fmm_operators_type, typename value_type, typename OptionsType>
+auto run(const std::string& input_source_file, const std::string& input_target_file, const int& tree_height,
+         const int& group_size, const int& order, OptionsType op) -> int
+{
+    std::cout << cpp_tools::colors::blue << "Entering run test...\n" << cpp_tools::colors::reset;
+
+    //  The matrix kernel
+    using near_matrix_kernel_type = typename fmm_operators_type::near_field_type::matrix_kernel_type;
+    using far_field_type = typename fmm_operators_type::far_field_type;
+    using interpolator_type = typename far_field_type::approximation_type;
+
+    using far_matrix_kernel_type = typename interpolator_type::matrix_kernel_type;
+    static constexpr std::size_t nb_inputs{near_matrix_kernel_type::km};
+    static constexpr std::size_t nb_outputs{far_matrix_kernel_type::kn};
+    //
+    // near_matrix_kernel_type mk{};
+
+    std::cout << cpp_tools::colors::blue << "Entering tree test...\n" << cpp_tools::colors::reset;
+    std::cout << "<params> Dimension:          " << dimension << '\n';
+    std::cout << "<params> input_source_file:  " << input_source_file << '\n';
+    std::cout << "<params> input_target_file:  " << input_target_file << '\n';
+    std::cout << "<params> tree_height:        " << tree_height << '\n';
+    std::cout << "<params> group_size:         " << group_size << '\n';
+    std::cout << "<params> order:              " << order << "    accuracy " << std::pow(10, 1 - order) << '\n';
+    std::cout << "<params> option:             " << op.value() << '\n' << cpp_tools::colors::reset;
+
+    //
+    // Open particles files
+
+    cpp_tools::timers::timer<std::chrono::minutes> time{};
+
+    constexpr int zeros{1};   // should be zero
+    using point_type = scalfmm::container::point<value_type, dimension>;
+    using particle_source_type =
+      scalfmm::container::particle<value_type, dimension, value_type, nb_inputs, value_type, zeros, std::size_t>;
+    using particle_target_type =
+      scalfmm::container::particle<value_type, dimension, value_type, zeros, value_type, nb_outputs, std::size_t>;
+
+    using box_type = scalfmm::component::box<point_type>;
+    // Construct the container of particles
+
+    using container_source_type = std::vector<particle_source_type>;
+    using container_target_type = std::vector<particle_target_type>;
+    //
+    using leaf_source_type = scalfmm::component::leaf_view<particle_source_type>;
+    using leaf_target_type = scalfmm::component::leaf_view<particle_target_type>;
+    //
+
+    using cell_type = scalfmm::component::cell<typename interpolator_type::storage_type>;
+    using tree_source_type = scalfmm::component::group_tree_view<cell_type, leaf_source_type, box_type>;
+    using tree_target_type = scalfmm::component::group_tree_view<cell_type, leaf_target_type, box_type>;
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+    std::cout << cpp_tools::colors::green << "Creating & Inserting ...\n" << cpp_tools::colors::reset;
+    //
+    time.tic();
+    point_type box_center_source{};
+    value_type box_width_source{};
+    container_source_type container_source{};
+    std::tie(container_source, box_center_source, box_width_source) =
+      read_data<container_source_type>(input_source_file);
+    box_type box_source(box_width_source, box_center_source);
+
+    point_type box_center_target{};
+    value_type box_width_target{};
+    container_target_type container_target{};
+    std::tie(container_target, box_center_target, box_width_target) =
+      read_data<container_target_type>(input_target_file);
+    box_type box_target(box_width_target, box_center_target);
+    time.tac();
+    std::cout << cpp_tools::colors::green << "... Done.\n" << cpp_tools::colors::reset;
+
+    std::cout << cpp_tools::colors::yellow << "Container loaded in " << time.elapsed() << " s\n"
+              << cpp_tools::colors::reset;
+
+    auto box = scalfmm::utils::bounding_box(box_source, box_target);
+    std::cout << "bounding_box " << box << std::endl;
+    // auto container_all = scalfmm::utils::merge(container_source, container_target) ;
+
+    // build trees
+    bool sorted = false;
+    tree_source_type tree_source(tree_height, order, box, group_size, group_size, container_source, sorted);
+
+    tree_target_type tree_target(tree_height, order, box, group_size, group_size, container_target, sorted);
+
+    /////////////////////////////////////////////////////////////////////////////////////
+    //
+    //              Compute source-target interaction though FMM
+    //
+    /////////////////////////////////////////////////////////////////////////////////////
+    auto box_width = box.width(0);
+    // Far field
+    interpolator_type interpolator(order, tree_height, box_width);
+    typename fmm_operators_type::far_field_type far_field(interpolator);
+    // Near field
+    // near_matrix_kernel_type mk_near{};
+    typename fmm_operators_type::near_field_type near_field;
+    near_field.mutual() = false;
+    //
+    std::cout << cpp_tools::colors::blue << "Fmm with kernels: " << std::endl
+              << "       near " << near_field.matrix_kernel().name() << " with mutual: " << near_field.mutual() << '\n';
+
+    fmm_operators_type fmm_operator(near_field, far_field);
+    auto neighbour_separation = fmm_operator.near_field().separation_criterion();
+    //
+    scalfmm::list::sequential::build_interaction_lists(tree_source, tree_target, neighbour_separation,
+                                                       near_field.mutual());
+    auto operator_to_proceed = scalfmm::algorithms::all;
+    //
+    scalfmm::algorithms::fmm[scalfmm::options::_s(op)](tree_source, tree_target, fmm_operator, operator_to_proceed);
+
+    std::cout << "\n" << cpp_tools::colors::reset;
+
+    /////////////////////////////////////////////////////////////////////////////////////
+    //
+    //              Check with the direct computation
+    //
+    /////////////////////////////////////////////////////////////////////////////////////
+    //
+    near_matrix_kernel_type mk{};
+    std::cout << cpp_tools::colors::green << "full interaction computation  with kernel: " << mk.name() << std::endl
+              << cpp_tools::colors::reset;
+
+    time.tic();
+    scalfmm::algorithms::full_direct(container_source, container_target, mk);
+    time.tac();
+    std::cout << cpp_tools::colors::green << "... Done.\n" << cpp_tools::colors::reset;
+    std::cout << cpp_tools::colors::yellow << "Computation done in " << time.elapsed() << " min\n"
+              << cpp_tools::colors::reset;
+    // Compare with the FMM computation
+    auto error{check_output(container_target, tree_target).get_relative_l2_norm()};
+    value_type eps = 5 * std::pow(10.0, 1 - order);
+
+    bool works = error < eps;
+    std::cout << cpp_tools::colors::magenta << "relative L2 error: " << error << '\n' << cpp_tools::colors::reset;
+    if(works)
+    {
+        std::cout << cpp_tools::colors::blue << " Test Ok \n" << cpp_tools::colors::reset;
+    }
+    else
+    {
+        std::cout << cpp_tools::colors::red << " Test is WRONG !! the error must be around  " << eps << " \n "
+                  << cpp_tools::colors::reset;
+        std::cout << " Display dependencies\n";
+        scalfmm::io::trace_group_dependencies(std::cout, tree_source, tree_target);
+        std::cout << cpp_tools::colors::reset;
+    }
+    return works;
+}
+
+template<typename V, std::size_t D, typename MK, typename O>
+using interpolator_alias = scalfmm::interpolation::interpolator<V, D, MK, O>;

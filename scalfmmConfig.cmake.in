@@ -1,0 +1,84 @@
+#-----------------------------------------------------------------------------
+#
+# SCALFMMConfig.cmake - SCALFMM CMake configuration file for external projects.
+#
+# This file is configured by SCALFMM and used by the SCALFMM.cmake module
+# to load SCALFMM's settings for an external project.
+#
+
+@PACKAGE_INIT@
+
+if(@PROJECT_NAME@_ONLY_HEADERS)
+    if(NOT TARGET @PROJECT_NAME@::@PROJECT_NAME@-headers AND NOT TARGET @PROJECT_NAME@::@PROJECT_NAME@)
+      include("@CMAKE_INSTALL_PREFIX@/lib/cmake/cpp_tools/cpp-tools-targets.cmake")
+      include("@CMAKE_INSTALL_PREFIX@/lib/cmake/@PROJECT_NAME@/@PROJECT_NAME@-targets.cmake")
+    endif()
+else()
+    if(NOT TARGET @PROJECT_NAME@::@PROJECT_NAME@-headers AND NOT TARGET @PROJECT_NAME@::@PROJECT_NAME@)
+      include("@CMAKE_INSTALL_PREFIX@/lib/cmake/cpp_tools/cpp-tools-targets.cmake")
+      include("@CMAKE_INSTALL_PREFIX@/lib/cmake/@PROJECT_NAME@/@PROJECT_NAME@-targets.cmake")
+    endif()
+
+    set(IMPORTED_LIBS @CORE_LIBRARIES@)
+    set(BLA_VENDOR @BLA_VENDOR@)
+    include(CMakeFindDependencyMacro)
+    foreach(lib IN LISTS IMPORTED_LIBS)
+      if("${lib}" STREQUAL "BLAS" AND "@BLA_VENDOR@" STREQUAL "Intel10_64lp_seq")
+          set(INTERN_MKL_ROOT @MKL_ROOT@)
+          find_file(MKL_CONFIG MKLConfig.cmake ${INTERN_MKL_ROOT}/lib/cmake/mkl)
+        if(MKL_CONFIG)
+          set(MKL_DIR ${INTERN_MKL_ROOT}/lib/cmake/mkl)
+          message(STATUS "MKL_CONFIG found.")
+          set(MKL_INTERFACE lp64)
+          set(MKL_LINK dynamic)
+          set(MKL_THREADING sequential)
+          find_dependency(MKL)
+          set_target_properties(MKL::MKL PROPERTIES
+                  INTERFACE_INCLUDE_DIRECTORIES
+                  "${INTERN_MKL_ROOT}/include;${INTERN_MKL_ROOT}/include/fftw"
+          )
+          set(BLAS_FOUND TRUE)
+        else()
+            set(ENV{MKLROOT} ${INTERN_MKL_ROOT})
+          message(STATUS "MKL_CONFIG not found! Fallback to cmake.")
+          find_dependency(${lib})
+          if(DEFINED BLAS_FOUND)
+              set_target_properties(BLAS::BLAS PROPERTIES
+                  INTERFACE_INCLUDE_DIRECTORIES
+                  "${INTERN_MKL_ROOT}/include;${INTERN_MKL_ROOT}/include/fftw"
+                  )
+          elseif()
+              message(FATAL_ERROR "CBLAS required, not found!")
+          endif()
+        endif()
+      elseif("${lib}" STREQUAL "FFTW")
+        if(NOT "@BLA_VENDOR@" STREQUAL "Intel10_64lp_seq")
+          find_package(PkgConfig REQUIRED)
+          pkg_search_module(FFTW REQUIRED fftw3 IMPORTED_TARGET)
+          pkg_search_module(FFTWF REQUIRED fftw3f IMPORTED_TARGET)
+          set(FFTW_FOUND TRUE)
+        elseif("@BLA_VENDOR@" STREQUAL "Intel10_64lp_seq" AND BLAS_FOUND)
+          set(FFTW_FOUND TRUE)
+        endif()
+      else()
+        find_dependency(${lib})
+      endif()
+      if(NOT ${lib}_FOUND)
+        message(FATAL_ERROR "MISSING ${lib} DEPENDENCY !")
+      else()
+        message(STATUS "Found ${lib} dependency.")
+      endif()
+    endforeach()
+
+    if(TARGET @PROJECT_NAME@::@PROJECT_NAME@-mpi)
+      set(IMPORTED_LIBS @MPI_LIBRARIES@)
+      foreach(lib IN LISTS IMPORTED_LIBS)
+        find_dependency(${lib})
+        if(NOT ${lib}_FOUND)
+          message(FATAL_ERROR "MISSING ${lib} DEPENDENCY !")
+        else()
+          message(STATUS "Found ${lib} dependency.")
+        endif()
+      endforeach()
+    endif()
+endif()

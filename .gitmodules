@@ -1,0 +1,18 @@
+[submodule "experimental/modules/internal/xtl"]
+	path = modules/internal/xtl
+	url = https://github.com/xtensor-stack/xtl.git
+[submodule "experimental/modules/internal/xsimd"]
+	path = modules/internal/xsimd
+	url = https://github.com/xtensor-stack/xsimd.git
+[submodule "experimental/modules/internal/xtensor"]
+	path = modules/internal/xtensor
+	url = https://github.com/xtensor-stack/xtensor.git
+[submodule "experimental/modules/internal/xtensor-blas"]
+	path = modules/internal/xtensor-blas
+	url = https://github.com/xtensor-stack/xtensor-blas.git
+[submodule "experimental/modules/internal/xtensor-fftw"]
+	path = modules/internal/xtensor-fftw
+	url = https://github.com/xtensor-stack/xtensor-fftw.git
+[submodule "experimental/modules/internal/cpp_tools"]
+	path = modules/internal/cpp_tools
+	url = https://gitlab.inria.fr/compose/oldstack/cpp_tools.git
