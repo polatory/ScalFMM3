@@ -196,6 +196,12 @@ namespace scalfmm::options
         static constexpr auto value() noexcept -> std::string_view { return "barycentric_"; };
     };
 
+    struct modified_uniform_ : setting<modified_uniform_>
+    {
+        using type = modified_uniform_;
+        static constexpr auto value() noexcept -> std::string_view { return "modified_uniform_"; };
+    };
+
     /**
     * @brief Predefined static option for 'Uniform interpolation' with fully stored M2L interaction matrices.
     */
@@ -230,6 +236,8 @@ namespace scalfmm::options
     * @brief Predefined static option for 'Chebyshev-based interpolation' with compressed M2L interaction matrices.
     */
     static constexpr auto chebyshev_low_rank = chebyshev_<low_rank_>{};
+
+    static constexpr auto modified_uniform = modified_uniform_{};
 
     /**
     * @brief Predefined static option to fully store the M2L interaction matrices.
