@@ -118,11 +118,14 @@ namespace scalfmm::component
         /// @return std::size_t
         [[nodiscard]] inline auto index() const noexcept -> std::size_t { return m_symbolics.morton_index; }
 
+        bool& locals_frozen() { return m_locals_frozen; }
+
       private:
         position_type m_center{};
         value_type m_width{};
         std::size_t m_order{};
         symbolics_type m_symbolics{};
+        bool m_locals_frozen{};
     };
 
     /// @brief The symbolics type stores information about the cell

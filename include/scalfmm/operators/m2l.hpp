@@ -26,6 +26,11 @@ namespace scalfmm::operators
                     Cell& target_cell, std::size_t current_tree_level,
                     [[maybe_unused]] typename Approximation::buffer_type& buffer)
     {
+        if (target_cell.locals_frozen())
+        {
+            return;
+        }
+
         approximation.apply_m2l_single(source_cell, target_cell, neighbor_idx, current_tree_level, buffer);
     }
 
@@ -33,6 +38,11 @@ namespace scalfmm::operators
     inline void m2l_loop(Approximation const& approximation, Cell& target_cell, std::size_t current_tree_level,
                          [[maybe_unused]] typename Approximation::buffer_type& buffer)
     {
+        if (target_cell.locals_frozen())
+        {
+            return;
+        }
+
         approximation.apply_m2l_loop(target_cell, current_tree_level, buffer);
     }
 }   // namespace scalfmm::operators
