@@ -1,0 +1,140 @@
+stages:
+  - docker
+  - build
+  - test
+  - deploy
+
+default:
+  image: $CI_REGISTRY_IMAGE
+  tags: ['ci.inria.fr', 'linux', 'large'] # gitlab instance runner (i.e. docker on linux)
+  interruptible: true
+
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
+# push event: executed only if the source branch name is main or starts with ci-
+# merge request event: executed if the source branch name does not start with notest-
+# schedule event: not executed
+.only-main-mr:
+  rules:
+    - if: ($CI_COMMIT_BRANCH =~ /^ci-.*$/)
+    - if: ($CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH) &&
+          (($CI_PROJECT_ROOT_NAMESPACE == "solverstack"   ) ||
+           ($CI_PROJECT_ROOT_NAMESPACE == $CI_PROJECT_NAME))
+    - if: (($CI_PIPELINE_SOURCE == "merge_request_event") &&
+           ($CI_MERGE_REQUEST_SOURCE_BRANCH_NAME !~ /^notest-.*$/))
+    - if: ($CI_PIPELINE_SOURCE == "schedule" )
+      when: never
+
+docker:
+  stage: docker
+  image: docker
+  when: manual
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker build -f Dockerfile-ci -t $CI_REGISTRY_IMAGE $PWD
+    - docker push $CI_REGISTRY_IMAGE
+
+build:
+  stage: build
+  extends: .only-main-mr
+  timeout: 2 hours
+  variables:
+    GIT_CLONE_PATH: $CI_BUILDS_DIR/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME
+  script:
+    - cmake -B build -DCMAKE_INSTALL_PREFIX=$PWD/install
+        -Dscalfmm_USE_MKL=ON
+        -Dscalfmm_USE_MPI=OFF
+        -Dscalfmm_BUILD_EXAMPLES=ON
+        -Dscalfmm_BUILD_UNITS=ON
+        -Dscalfmm_BUILD_TOOLS=ON
+        -Dscalfmm_BUILD_CHECK=ON
+        -DCMAKE_VERBOSE_MAKEFILE=ON
+        #-DCMAKE_CXX_FLAGS="-O0 -g -Wall -fPIC -fno-inline --coverage"
+    - cmake --build build -j 4 > /dev/null
+    - cmake --build build -j 4 --target examples > /dev/null
+    - cmake --build build -j 4 --target units > /dev/null
+    - cmake --install build
+  artifacts:
+    name: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
+    expire_in: 1 week
+    paths: [build]
+    untracked: true
+
+test:
+  stage: test
+  extends: .only-main-mr
+  dependencies:
+    - build
+  variables:
+    GIT_CLONE_PATH: $CI_BUILDS_DIR/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME
+    OMP_NUM_THREADS: 4
+  script:
+    - ctest --test-dir build --output-on-failure --no-compress-output --output-junit $PWD/test.xml
+    #- gcovr --xml-pretty --exclude-unreachable-branches --print-summary -o coverage.xml --root $PWD
+  #coverage: /^\s*lines......:\s*\d+.\d+\%/
+  artifacts:
+    reports:
+      junit: test.xml
+      #coverage_report:
+      #  coverage_format: cobertura
+      #  path: coverage.xml
+
+benchmark:
+  stage: test
+  tags: ['plafrim']
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $CI_PIPELINE_SCHEDULE_DESCRIPTION == "Benchmarks"
+  needs: []
+  variables:
+    CI_HOSTNAME: zonda
+  cache:
+    key: "$CI_JOB_NAME_SLUG-$CI_COMMIT_REF_SLUG"
+    paths:
+      - build
+  parallel:
+    matrix:
+      - CI_BENCHMARK: ['accuracy', 'timeseq', 'timeomp']
+  script:
+    - ./scripts/plafrim_level1.sh
+  artifacts:
+    when: always
+    paths:
+      - ./*.csv
+      - ./*.log
+      - ./scripts/results/
+
+database:
+  stage: deploy
+  tags: ['plafrim']
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $CI_PIPELINE_SCHEDULE_DESCRIPTION == "Benchmarks"
+  needs: ['benchmark']
+  script:
+    - guix time-machine -C .guix/scalfmm-channels.scm -- shell --pure --preserve="^CI|proxy$"
+        -m .guix/scalfmm-manifest-gcc-mkl-bench.scm
+        -- /bin/bash --norc ./scripts/database.sh
+  artifacts:
+    when: always
+    paths:
+      - ./*.csv
+      - ./*.pdf
+      - ./*.sqlite3
+      - ./scripts/results/
+
+pages:
+  stage: deploy
+  when: manual
+  needs: []
+  script:
+    - cmake -B build
+        -Dscalfmm_USE_MKL=ON
+        -Dscalfmm_BUILD_DOC=ON
+        -DCMAKE_VERBOSE_MAKEFILE=ON
+    - cmake --build build -j 4 > /dev/null
+    - cmake --build build -j 4 --target doc > /dev/null
+    - cp -r build/docs/sphinx/ public
+  artifacts:
+    paths:
+      - public

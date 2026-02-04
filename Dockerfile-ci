@@ -1,0 +1,37 @@
+#
+#  @file Dockerfile-ci
+#
+#  @copyright 2025-2025 Bordeaux INP, CNRS (LaBRI UMR 5800), Inria,
+#                       Univ. Bordeaux. All rights reserved.
+#
+#  @version 3.0.0
+#  @author Florent Pruvost
+#  @date 2025-01-21
+#
+# This docker image is used to test the package during gitlab-ci pipelines.
+# It should be stored in the gitlab's project container registry:
+# https://gitlab.inria.fr/solverstack/ScalFMM/container_registry
+#
+# solverstack/docker/base docker image is defined here: https://gitlab.inria.fr/solverstack/docker
+FROM registry.gitlab.inria.fr/solverstack/docker/base
+
+USER root
+
+RUN apt-get -y update
+
+# ScalFMM dependencies: cpu kernels, mpi, ...
+RUN apt-get -y upgrade --no-install-recommends \
+    libmkl-dev \
+    sphinx-common \
+    python3-breathe \
+    python3-exhale \
+    python3-recommonmark \
+    python3-sphinx-rtd-theme
+    #libopenmpi-dev \
+    #libstarpu-dev \
+    #pybind11-dev
+
+# Set some default environment variables
+ENV MKLROOT /usr
+
+USER gitlab

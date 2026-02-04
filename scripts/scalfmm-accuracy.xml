@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jube>
+    <benchmark name="scalfmm_accuracy" outpath="results">
+        <comment>scalfmm accuracy tests</comment>
+
+        <!-- Cartesian product of input parameters -->
+        <parameterset name="param">
+            <parameter name="ndim"               type="int"   >1, 2, 3</parameter>
+            <!-- <parameter name="ndim"               type="int"   >2, 3</parameter> -->
+            <parameter name="kernel_type"        type="int"   >0, 7</parameter>
+            <!-- <parameter name="kernel_type"        type="int"   >0</parameter> -->
+            <parameter name="interp_type"        type="int"   >1, 2, 4</parameter>
+            <!-- <parameter name="interp_type"        type="int"   >3</parameter> -->
+            <parameter name="nrun"               type="int"   >1</parameter>
+            <parameter name="groupsize"          type="int"   >1</parameter>
+            <parameter name="tree_height"        type="int"   >4, 5</parameter>
+            <parameter name="interp_order"       type="int"   >3, 4, 5, 6, 7, 8, 9, 10</parameter>
+            <!-- <parameter name="interp_order"       type="int"   >3, 4</parameter> -->
+            <parameter name="size"               type="int"   >15000</parameter>
+            <parameter name="command"            type="string">$SCALFMM_EXE_DIR/fmm-computation-seq --direct-computation --fmm-computation --dimension ${ndim} --group-size ${groupsize} --interp-settings ${interp_type} --kernel ${kernel_type} --order ${interp_order} --nb-runs ${nrun} --size ${size} --tree-height ${tree_height}</parameter>
+        </parameterset>
+
+        <!-- Execution commands -->
+        <step name="run">
+            <use>param</use>
+            <do>echo "Commit = $GIT_COMMIT"</do>
+            <do>echo "Date = $GIT_COMMIT_DATE"</do>
+            <do>echo "Hostname = $CI_HOSTNAME"</do>
+            <do>$command</do>
+        </step>
+
+        <!-- Regex pattern -->
+        <patternset name="regexlog">
+            <pattern name="gitcommit" type="string">Commit = ([0-9a-f]{40}).*</pattern>
+            <pattern name="gitcommitdate" type="string">Date = (\d{4}\-\d{2}\-\d{2}\s\d{2}:\d{2}:\d{2}\s\+\d{4}).*</pattern>
+            <pattern name="hostname" type="string">Hostname = $jube_pat_wrd</pattern>
+            <pattern name="error" type="float">Relative L2-norm = $jube_pat_fp</pattern>
+        </patternset>
+
+        <!-- Analyse -->
+        <analyser name="parse">
+            <!-- use a pattern set -->
+            <use>regexlog</use>
+            <analyse step="run">
+                <file>stdout</file> <!-- file which should be scanned -->
+            </analyse>
+        </analyser>
+
+        <!-- Create result table -->
+        <result>
+            <use>parse</use> <!-- use existing analyser -->
+            <table name="accuracy_csv" style="csv">
+                <column>gitcommit</column>
+                <column>gitcommitdate</column>
+                <column>hostname</column>
+                <column>ndim</column>
+                <column>kernel_type</column>
+                <column>interp_type</column>
+                <column>tree_height</column>
+                <column>interp_order</column>
+                <column>error</column>
+            </table>
+            <database name="accuracy" primekeys="gitcommit,gitcommitdate,hostname,ndim,kernel_type,interp_type,tree_height,interp_order,error" file="scalfmm.sqlite3">
+                <key>gitcommit</key>
+                <key>gitcommitdate</key>
+                <key>hostname</key>
+                <key>ndim</key>
+                <key>kernel_type</key>
+                <key>interp_type</key>
+                <key>tree_height</key>
+                <key>interp_order</key>
+                <key>error</key>
+            </database>
+        </result>
+
+    </benchmark>
+</jube>

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jube>
+    <benchmark name="scalfmm_time_seq" outpath="results">
+        <comment>scalfmm OMP-tasks timing tests</comment>
+
+        <!-- Cartesian product of input parameters -->
+        <parameterset name="param">
+            <parameter name="ndim"               type="int"   >1, 2, 3</parameter>
+            <parameter name="kernel_type"        type="int"   >0</parameter>
+            <parameter name="interp_type"        type="int"   >2</parameter>
+            <parameter name="nrun"               type="int"   >1</parameter>
+            <parameter name="interp_order"       type="int"   >5</parameter>
+            <parameter name="size"               type="int"   >500000</parameter>
+            <parameter name="nthread"            type="int"   >1, 2, 4, 8, 16, 32</parameter>
+            <parameter name="tree_height" mode="python" type="int">int(((int($size/(10*$interp_order^$ndim))).bit_length() - 1)/$ndim) + 1</parameter>
+            <parameter name="groupsize"          type="int"   >10, 100, 1000, 5000</parameter>
+            <parameter name="command"            type="string">$SCALFMM_EXE_DIR/fmm-computation-omp --fmm-computation --dimension ${ndim} --group-size ${groupsize} --interp-settings ${interp_type} --kernel ${kernel_type} --order ${interp_order} --nb-runs ${nrun} --threads ${nthread} --size ${size} --tree-height ${tree_height}</parameter>
+        </parameterset>
+
+        <!-- Execution commands -->
+        <step name="run">
+            <use>param</use>
+            <do>echo "Commit = $GIT_COMMIT"</do>
+            <do>echo "Date = $GIT_COMMIT_DATE"</do>
+            <do>echo "Hostname = $CI_HOSTNAME"</do>
+            <do>$command</do>
+        </step>
+
+        <!-- Regex pattern -->
+        <patternset name="regexlog">
+            <pattern name="gitcommit" type="string">Commit = ([0-9a-f]{40}).*</pattern>
+            <pattern name="gitcommitdate" type="string">Date = (\d{4}\-\d{2}\-\d{2}\s\d{2}:\d{2}:\d{2}\s\+\d{4}).*</pattern>
+            <pattern name="hostname" type="string">Hostname = $jube_pat_wrd</pattern>
+            <pattern name="timefull" type="float">Full algo : $jube_pat_fp</pattern>
+        </patternset>
+
+        <!-- Analyse -->
+        <analyser name="parse">
+            <!-- use a pattern set -->
+            <use>regexlog</use>
+            <analyse step="run">
+                <file>stdout</file> <!-- file which should be scanned -->
+            </analyse>
+        </analyser>
+
+        <!-- Create result table -->
+        <result>
+            <use>parse</use> <!-- use existing analyser -->
+            <table name="timeomp_csv" style="csv">
+                <column>gitcommit</column>
+                <column>gitcommitdate</column>
+                <column>hostname</column>
+                <column>ndim</column>
+                <column>kernel_type</column>
+                <column>interp_type</column>
+                <column>nrun</column>
+                <column>tree_height</column>
+                <column>interp_order</column>
+                <column>size</column>
+                <column>nthread</column>
+                <column>groupsize</column>
+                <column>timefull_avg</column>
+            </table>
+            <database name="timeomp" primekeys="gitcommit,gitcommitdate,hostname,ndim,kernel_type,interp_type,nrun,tree_height,interp_order,size,nthread,groupsize,timefull_avg" file="scalfmm.sqlite3">
+                <key>gitcommit</key>
+                <key>gitcommitdate</key>
+                <key>hostname</key>
+                <key>ndim</key>
+                <key>kernel_type</key>
+                <key>interp_type</key>
+                <key>nrun</key>
+                <key>tree_height</key>
+                <key>interp_order</key>
+                <key>size</key>
+                <key>nthread</key>
+                <key>groupsize</key>
+                <key>timefull_avg</key>
+            </database>
+        </result>
+
+    </benchmark>
+</jube>

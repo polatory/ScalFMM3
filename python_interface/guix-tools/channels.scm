@@ -1,0 +1,67 @@
+(list (channel
+        (name 'guix)
+        (url "https://git.savannah.gnu.org/git/guix.git")
+        (branch "master")
+        (commit
+          "cf74986eec8ffdcc12506870fb807a1ebb43e6e3")
+        (introduction
+          (make-channel-introduction
+            "9edb3f66fd807b096b48283debdcddccfea34bad"
+            (openpgp-fingerprint
+              "BBB0 2DDF 2CEA F6A8 0D1D  E643 A2A0 6DF2 A33A 54FA"))))
+      (channel
+        (name 'guix-hpc-non-free)
+        (url "https://gitlab.inria.fr/guix-hpc/guix-hpc-non-free.git")
+        (branch "master")
+        (commit
+          "06f813adfe8d9e558c82d0114ead71dde3d59a0d"))
+      (channel
+        (name 'guix-hpc)
+        (url "https://gitlab.inria.fr/guix-hpc/guix-hpc.git")
+        (branch "master")
+        (commit
+          "9275bc4577611d41d2e8e9b995e0693e9f62a7b5"))
+      (channel
+        (name 'nonguix)
+        (url "https://gitlab.com/nonguix/nonguix")
+        (branch "master")
+        (commit
+          "6e864249c2025863e18e42587cb42764a99bec27")
+        (introduction
+          (make-channel-introduction
+            "897c1a470da759236cc11798f4e0a5f7d4d59fbc"
+            (openpgp-fingerprint
+              "2A39 3FFF 68F4 EF7A 3D29  12AF 6F51 20A0 22FB B2D5"))))
+      (channel
+        (name 'guix-science-nonfree)
+        (url "https://codeberg.org/guix-science/guix-science-nonfree.git")
+        (branch "master")
+        (commit
+          "446626ab1ca977b9278f431da8dde9ec8cf36457")
+        (introduction
+          (make-channel-introduction
+            "58661b110325fd5d9b40e6f0177cc486a615817e"
+            (openpgp-fingerprint
+              "CA4F 8CF4 37D7 478F DA05  5FD4 4213 7701 1A37 8446"))))
+      (channel
+        (name 'guix-science)
+        (url "https://codeberg.org/guix-science/guix-science.git")
+        (branch "master")
+        (commit
+          "e79f07d6ae81721e62d7cce78378f3ec49ff4efd")
+        (introduction
+          (make-channel-introduction
+            "b1fe5aaff3ab48e798a4cce02f0212bc91f423dc"
+            (openpgp-fingerprint
+              "CA4F 8CF4 37D7 478F DA05  5FD4 4213 7701 1A37 8446"))))
+      (channel
+        (name 'guix-past)
+        (url "https://codeberg.org/guix-science/guix-past.git")
+        (branch "master")
+        (commit
+          "f99ada4123de1eadf668d34dac2d726407634549")
+        (introduction
+          (make-channel-introduction
+            "0c119db2ea86a389769f4d2b9c6f5c41c027e336"
+            (openpgp-fingerprint
+              "3CE4 6455 8A84 FDC6 9DB4  0CFB 090B 1199 3D9A EBB5")))))

@@ -1,0 +1,183 @@
+{
+    "version": 3,
+    "cmakeMinimumRequired": {
+	"major": 3,
+	"minor": 30,
+	"patch": 0
+    },
+    "configurePresets": [
+	{
+	    "name": "base",
+            "hidden": true,
+	    "generator": "Unix Makefiles",
+	    "binaryDir": "${sourceDir}/build-${presetName}",
+	    "description": "Configure in Release mode with optimization enabled",
+	    "cacheVariables": {
+		"CMAKE_BUILD_TYPE": "Release",
+		"CMAKE_CXX_FLAGS": "-O3 -march=native",
+		"scalfmm_BUILD_UNITS": true,
+		"scalfmm_BUILD_BENCH": true,
+		"scalfmm_USE_MPI": true
+	    }
+	},
+	{
+	    "name": "default",
+	    "inherits": "base",
+	    "displayName": "Default config (OpenBLAS).",
+	    "description": "Release mode + optimization enabled + OpenBLAS",
+	    "cacheVariables": {
+		"BLA_VENDOR": "OpenBLAS"
+	    }
+	},
+	{
+	    "name": "mkl",
+	    "inherits": "base",
+	    "displayName": "Default config (MKL).",
+	    "description": "Release mode + optimization enabled + MKL",
+	    "cacheVariables": {
+		"scalfmm_USE_MKL": true
+	    }
+	}
+    ],
+    "buildPresets": [
+	{
+	    "name": "base",
+            "hidden": true,
+	    "description": "Build all targets in Release mode.",
+	    "targets": ["units", "tools", "examples"]
+	},
+	{
+	    "name": "bench",
+            "hidden": true,
+	    "description": "Build the bench targets in Release mode.",
+	    "targets": ["fmm-computation-seq", "fmm-computation-omp"]
+	},
+	{
+	    "name": "build-default",
+	    "inherits": "base",
+	    "displayName": "Default build (OpenBLAS).",
+	    "description": "Build all targets in Release mode with OpenBLAS.",
+	    "configurePreset": "default"
+	},
+	{
+	    "name": "build-mkl",
+	    "inherits": "base",
+	    "displayName": "Default build (MKL).",
+	    "description": "Build all targets in Release mode with MKL.",
+	    "configurePreset": "mkl"
+	},
+	{
+	    "name": "build-bench-default",
+	    "inherits": "bench",
+	    "displayName": "Default build (OpenBLAS) for the benchmarks.",
+	    "description": "Build the bench targets in Release mode with OpenBLAS.",
+	    "configurePreset": "default"
+	},
+	{
+	    "name": "build-bench-mkl",
+	    "inherits": "bench",
+	    "displayName": "Default build (MKL) for the benchmarks.",
+	    "description": "Build the bench targets in Release mode with MKL.",
+	    "configurePreset": "mkl"
+	}
+    ],
+    "testPresets": [
+	{
+	    "name": "base",
+            "hidden": true,
+	    "output": {
+		"outputOnFailure": true
+	    },
+	    "execution": {
+		"noTestsAction": "error",
+		"stopOnFailure": false
+	    }
+	},
+	{
+	    "name": "sequential",
+	    "hidden": true,
+	    "inherits": "base",
+	    "filter": {
+		"exclude": {
+		    "name": "_omp$|_mpi$"
+		}
+	    }
+	},
+	{
+	    "name": "openmp",
+            "hidden": true,
+	    "inherits": "base",
+	    "filter": {
+		"include": {
+		"name": "_omp$"
+		}
+	    }
+	},
+	{
+	    "name": "mpi",
+            "hidden": true,
+	    "inherits": "base",
+	    "filter": {
+		"include": {
+		"name": "_mpi$"
+		}
+	    }
+	},
+	{
+	    "name": "test-default",
+	    "inherits": "base",
+	    "displayName": "Run all tests (OpenBLAS)",
+	    "description": "Run all the tests with OpenBLAS",
+	    "configurePreset": "default"
+	},
+	{
+	    "name": "test-mkl",
+	    "inherits": "base",
+	    "displayName": "Run all tests (MKL)",
+	    "description": "Run all the tests with the MKL",
+	    "configurePreset": "mkl"
+	},
+	{
+	    "name": "test-default-seq",
+	    "inherits": "sequential",
+	    "displayName": "Run sequential tests (OpenBLAS)",
+	    "description": "Run only the sequential tests with OpenBLAS",
+	    "configurePreset": "default"
+	},
+	{
+	    "name": "test-mkl-seq",
+	    "inherits": "sequential",
+	    "displayName": "Run sequential tests (MKL)",
+	    "description": "Run only the sequential tests with the MKL",
+	    "configurePreset": "mkl"
+	},
+	{
+	    "name": "test-default-omp",
+	    "inherits": "openmp",
+	    "displayName": "Run OpenMP tests (OpenBLAS)",
+	    "description": "Run only the OpenMP tests with OpenBLAS",
+	    "configurePreset": "default"
+	},
+	{
+	    "name": "test-mkl-omp",
+	    "inherits": "openmp",
+	    "displayName": "Run OpenMP tests (MKL)",
+	    "description": "Run only the OpenMP tests with the MKL",
+	    "configurePreset": "mkl"
+	},
+	{
+	    "name": "test-default-mpi",
+	    "inherits": "mpi",
+	    "displayName": "Run MPI tests (OpenBLAS)",
+	    "description": "Run only the MPI tests with OpenBLAS",
+	    "configurePreset": "default"
+	},
+	{
+	    "name": "test-mkl-mpi",
+	    "inherits": "mpi",
+	    "displayName": "Run MPI tests (MKL)",
+	    "description": "Run only the MPI tests with the MKL",
+	    "configurePreset": "mkl"
+	}
+    ]
+}
