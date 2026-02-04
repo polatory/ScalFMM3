@@ -7,9 +7,9 @@
 
 #include "scalfmm/meta/forward.hpp"
 #include "scalfmm/meta/traits.hpp"
-#include "xtensor/xlayout.hpp"
+#include "xtensor/core/xlayout.hpp"
 
-#include "xtensor/xtensor_forward.hpp"
+#include "xtensor/core/xtensor_forward.hpp"
 
 #include <algorithm>
 #include <any>

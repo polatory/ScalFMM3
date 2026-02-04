@@ -21,8 +21,8 @@
 #include "scalfmm/utils/tensor.hpp"
 
 #include "xtensor-blas/xlinalg.hpp"
-#include "xtensor/xtensor_config.hpp"
-#include "xtensor/xvectorize.hpp"
+#include "xtensor/core/xtensor_config.hpp"
+#include "xtensor/core/xvectorize.hpp"
 
 #include <algorithm>
 #include <any>

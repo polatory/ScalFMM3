@@ -3,7 +3,7 @@
 #include <iostream>
 #include <vector>
 
-#include <xtensor/xarray.hpp>
+#include <xtensor/containers/xarray.hpp>
 
 #include <cpp_tools/colors/colorized.hpp>
 #include <cpp_tools/timers/simple_timer.hpp>

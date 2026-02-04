@@ -22,12 +22,12 @@
 #include "xsimd/config/xsimd_config.hpp"
 #include "xsimd/memory/xsimd_aligned_allocator.hpp"
 #include "xtensor-blas/xlinalg.hpp"
-#include "xtensor/xlayout.hpp"
-#include "xtensor/xnpy.hpp"
-#include "xtensor/xslice.hpp"
-#include "xtensor/xtensor_config.hpp"
-#include "xtensor/xvectorize.hpp"
-#include "xtensor/xview.hpp"
+#include "xtensor/core/xlayout.hpp"
+#include "xtensor/io/xnpy.hpp"
+#include "xtensor/views/xslice.hpp"
+#include "xtensor/core/xtensor_config.hpp"
+#include "xtensor/core/xvectorize.hpp"
+#include "xtensor/views/xview.hpp"
 
 #include <algorithm>
 #include <any>

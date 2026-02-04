@@ -18,7 +18,7 @@
 #include "scalfmm/tree/for_each.hpp"
 #include "scalfmm/tree/utils.hpp"
 
-#include <xtensor/xview.hpp>
+#include <xtensor/views/xview.hpp>
 
 namespace scalfmm::utils
 {

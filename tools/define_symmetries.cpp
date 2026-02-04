@@ -11,9 +11,9 @@
 #include <iostream>
 #include <vector>
 //
-#include <xtensor/xarray.hpp>
-// #include <xtensor/xeval.hpp>
-// #include <xtensor/xmanipulation.hpp>
+#include <xtensor/containers/xarray.hpp>
+// #include <xtensor/core/xeval.hpp>
+// #include <xtensor/misc/xmanipulation.hpp>
 //
 #include "scalfmm/container/point.hpp"
 #include "scalfmm/interpolation/interpolation.hpp"

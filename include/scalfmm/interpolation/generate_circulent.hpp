@@ -8,13 +8,13 @@
 #include "scalfmm/meta/utils.hpp"
 #include "scalfmm/utils/tensor.hpp"
 
-#include "xtensor/xtensor_forward.hpp"
-#include "xtensor/xview.hpp"
+#include "xtensor/core/xtensor_forward.hpp"
+#include "xtensor/views/xview.hpp"
 
 #include <cstddef>
 #include <utility>
 #include <vector>
-#include <xtensor/xslice.hpp>
+#include <xtensor/views/xslice.hpp>
 
 namespace scalfmm::interpolation
 {

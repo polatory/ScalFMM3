@@ -11,8 +11,8 @@
 #include <unistd.h>
 #include <utility>
 #include <vector>
-#include <xtensor/xarray.hpp>
-#include <xtensor/xbuilder.hpp>
+#include <xtensor/containers/xarray.hpp>
+#include <xtensor/generators/xbuilder.hpp>
 
 #include "scalfmm/container/particle.hpp"
 #include "scalfmm/container/particle_container.hpp"

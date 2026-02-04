@@ -15,8 +15,8 @@
 #include <cpp_tools/colors/colorized.hpp>
 #include <scalfmm/container/variadic_adaptor.hpp>
 
-#include <xtensor/xarray.hpp>
-#include <xtensor/xtensor.hpp>
+#include <xtensor/containers/xarray.hpp>
+#include <xtensor/containers/xtensor.hpp>
 
 TEMPLATE_TEST_CASE("Variadic adaptor construction", "[variadic-adaptor-construction]", std::vector<float>)
 {

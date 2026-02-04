@@ -18,8 +18,8 @@
 // #include "scalfmm/tree/leaf.hpp"
 #include "scalfmm/utils/generate.hpp"
 
-#include "xtensor/xeval.hpp"
-#include "xtensor/xmanipulation.hpp"
+#include "xtensor/core/xeval.hpp"
+#include "xtensor/misc/xmanipulation.hpp"
 
 #include <algorithm>
 #include <array>

@@ -9,12 +9,12 @@
 #include "scalfmm/utils/io_helpers.hpp"
 #include "scalfmm/utils/math.hpp"
 
-#include "xtensor/xarray.hpp"
-#include "xtensor/xbuilder.hpp"
-#include "xtensor/xgenerator.hpp"
-#include "xtensor/xmath.hpp"
-#include "xtensor/xoperation.hpp"
-#include "xtensor/xtensor_forward.hpp"
+#include "xtensor/containers/xarray.hpp"
+#include "xtensor/generators/xbuilder.hpp"
+#include "xtensor/generators/xgenerator.hpp"
+#include "xtensor/core/xmath.hpp"
+#include "xtensor/core/xoperation.hpp"
+#include "xtensor/core/xtensor_forward.hpp"
 
 #include <array>
 #include <cmath>

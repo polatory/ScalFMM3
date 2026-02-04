@@ -18,7 +18,7 @@
 #include <tuple>
 #include <type_traits>
 #include <utility>
-#include <xtensor/xmath.hpp>
+#include <xtensor/core/xmath.hpp>
 
 namespace scalfmm::matrix_kernels::debug
 {

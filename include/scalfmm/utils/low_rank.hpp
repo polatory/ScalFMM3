@@ -7,7 +7,7 @@
 
 #include <array>
 #include <cpp_tools/colors/colorized.hpp>
-#include <xtensor/xtensor.hpp>
+#include <xtensor/containers/xtensor.hpp>
 
 namespace scalfmm::low_rank
 {

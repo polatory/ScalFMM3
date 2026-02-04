@@ -14,10 +14,10 @@
 #include <cpp_tools/cl_parser/tcli.hpp>
 #include <cpp_tools/colors/colorized.hpp>
 
-#include <xtensor/xbuilder.hpp>
-#include <xtensor/xmanipulation.hpp>
-#include <xtensor/xmath.hpp>
-#include <xtensor/xoperation.hpp>
+#include <xtensor/generators/xbuilder.hpp>
+#include <xtensor/misc/xmanipulation.hpp>
+#include <xtensor/core/xmath.hpp>
+#include <xtensor/core/xoperation.hpp>
 
 struct find_all_perms
 {

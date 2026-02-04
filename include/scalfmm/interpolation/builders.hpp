@@ -8,11 +8,11 @@
 #include "scalfmm/meta/const_functions.hpp"
 
 #include "xtensor-blas/xlinalg.hpp"
-#include "xtensor/xarray.hpp"
-#include "xtensor/xbuilder.hpp"
-#include "xtensor/xcontainer.hpp"
-#include "xtensor/xtensor.hpp"
-#include "xtensor/xtensor_forward.hpp"
+#include "xtensor/containers/xarray.hpp"
+#include "xtensor/generators/xbuilder.hpp"
+#include "xtensor/containers/xcontainer.hpp"
+#include "xtensor/containers/xtensor.hpp"
+#include "xtensor/core/xtensor_forward.hpp"
 
 #include <cstddef>
 #include <tuple>

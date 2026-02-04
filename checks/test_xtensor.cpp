@@ -22,20 +22,20 @@
 #include <xsimd/types/xsimd_traits.hpp>
 #include <xsimd/xsimd.hpp>
 #include <xtensor-blas/xlinalg.hpp>
-#include <xtensor/xadapt.hpp>
-#include <xtensor/xarray.hpp>
-#include <xtensor/xbuilder.hpp>
-#include <xtensor/xdynamic_view.hpp>
-#include <xtensor/xindex_view.hpp>
-#include <xtensor/xio.hpp>
-#include <xtensor/xmanipulation.hpp>
-#include <xtensor/xmath.hpp>
-#include <xtensor/xnoalias.hpp>
-#include <xtensor/xslice.hpp>
-#include <xtensor/xstrided_view.hpp>
-#include <xtensor/xtensor_forward.hpp>
-#include <xtensor/xtensor_simd.hpp>
-#include <xtensor/xutils.hpp>
+#include <xtensor/containers/xadapt.hpp>
+#include <xtensor/containers/xarray.hpp>
+#include <xtensor/generators/xbuilder.hpp>
+#include <xtensor/views/xdynamic_view.hpp>
+#include <xtensor/views/xindex_view.hpp>
+#include <xtensor/io/xio.hpp>
+#include <xtensor/misc/xmanipulation.hpp>
+#include <xtensor/core/xmath.hpp>
+#include <xtensor/core/xnoalias.hpp>
+#include <xtensor/views/xslice.hpp>
+#include <xtensor/views/xstrided_view.hpp>
+#include <xtensor/core/xtensor_forward.hpp>
+#include <xtensor/utils/xtensor_simd.hpp>
+#include <xtensor/utils/xutils.hpp>
 #include <xtl/xcomplex.hpp>
 
 using namespace scalfmm;

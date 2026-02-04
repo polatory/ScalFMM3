@@ -14,11 +14,11 @@
 #include "scalfmm/utils/math.hpp"
 #include "scalfmm/utils/tensor.hpp"
 
-#include "xtensor/xarray.hpp"
-#include "xtensor/xfixed.hpp"
-#include "xtensor/xtensor.hpp"
-#include "xtensor/xtensor_config.hpp"
-#include "xtensor/xtensor_forward.hpp"
+#include "xtensor/containers/xarray.hpp"
+#include "xtensor/containers/xfixed.hpp"
+#include "xtensor/containers/xtensor.hpp"
+#include "xtensor/core/xtensor_config.hpp"
+#include "xtensor/core/xtensor_forward.hpp"
 
 #include <array>
 #include <cstddef>

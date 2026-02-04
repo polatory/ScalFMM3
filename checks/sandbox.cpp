@@ -22,7 +22,7 @@
 #include <range/v3/view/generate.hpp>
 
 #include <xsimd/xsimd.hpp>
-#include <xtensor/xtensor.hpp>
+#include <xtensor/containers/xtensor.hpp>
 
 #include <scalfmm/container/particle.hpp>
 #include <scalfmm/container/particle_container.hpp>

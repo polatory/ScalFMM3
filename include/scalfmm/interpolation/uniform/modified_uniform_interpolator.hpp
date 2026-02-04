@@ -8,11 +8,11 @@
 
 #include <xsimd/xsimd.hpp>
 //#include <xtensor-fftw/basic.hpp>
-#include <xtensor/xarray.hpp>
-#include <xtensor/xtensor.hpp>
-#include <xtensor/xtensor_forward.hpp>
-#include <xtensor/xtensor_simd.hpp>
-#include <xtensor/xvectorize.hpp>
+#include <xtensor/containers/xarray.hpp>
+#include <xtensor/containers/xtensor.hpp>
+#include <xtensor/core/xtensor_forward.hpp>
+#include <xtensor/utils/xtensor_simd.hpp>
+#include <xtensor/core/xvectorize.hpp>
 
 #include "scalfmm/container/point.hpp"
 #include "scalfmm/interpolation/generate_circulent.hpp"

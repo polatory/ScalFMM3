@@ -17,20 +17,20 @@
 #include "xtensor-blas/xblas_utils.hpp"
 #include "xtensor-blas/xlinalg.hpp"
 
-#include "xtensor/xeval.hpp"
-#include "xtensor/xslice.hpp"
-#include "xtensor/xtensor_config.hpp"
-#include "xtensor/xutils.hpp"
+#include "xtensor/core/xeval.hpp"
+#include "xtensor/views/xslice.hpp"
+#include "xtensor/core/xtensor_config.hpp"
+#include "xtensor/utils/xutils.hpp"
 
-#include <xtensor/xadapt.hpp>
-#include <xtensor/xarray.hpp>
-#include <xtensor/xbuilder.hpp>
-#include <xtensor/xmanipulation.hpp>
-#include <xtensor/xmath.hpp>
-#include <xtensor/xpad.hpp>
-#include <xtensor/xstrided_view.hpp>
-#include <xtensor/xtensor_forward.hpp>
-#include <xtensor/xview.hpp>
+#include <xtensor/containers/xadapt.hpp>
+#include <xtensor/containers/xarray.hpp>
+#include <xtensor/generators/xbuilder.hpp>
+#include <xtensor/misc/xmanipulation.hpp>
+#include <xtensor/core/xmath.hpp>
+#include <xtensor/misc/xpad.hpp>
+#include <xtensor/views/xstrided_view.hpp>
+#include <xtensor/core/xtensor_forward.hpp>
+#include <xtensor/views/xview.hpp>
 
 #include <complex>
 #include <cstddef>

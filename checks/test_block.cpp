@@ -5,7 +5,7 @@
 #include <scalfmm/tree/leaf_view.hpp>
 #include <scalfmm/tree/utils.hpp>
 #include <utility>
-#include <xtensor/xtensor.hpp>
+#include <xtensor/containers/xtensor.hpp>
 
 template<typename B>
 auto print(B const& b_) -> void

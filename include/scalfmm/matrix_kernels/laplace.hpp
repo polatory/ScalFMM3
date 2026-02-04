@@ -8,7 +8,7 @@
 #include "scalfmm/matrix_kernels/mk_common.hpp"
 #include "scalfmm/meta/utils.hpp"
 #include "scalfmm/utils/math.hpp"
-#include "xtensor/xtensor_forward.hpp"
+#include "xtensor/core/xtensor_forward.hpp"
 
 #include <array>
 #include <cmath>

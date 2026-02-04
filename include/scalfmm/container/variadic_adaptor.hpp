@@ -11,7 +11,7 @@
 #include "scalfmm/meta/utils.hpp"
 
 #include "xsimd/config/xsimd_config.hpp"
-#include "xtensor/xexpression.hpp"
+#include "xtensor/core/xexpression.hpp"
 
 #include <algorithm>
 #include <cstddef>

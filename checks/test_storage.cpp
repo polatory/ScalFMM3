@@ -3,7 +3,7 @@
 #include <scalfmm/interpolation/uniform/uniform_interpolator.hpp>
 #include <scalfmm/matrix_kernels/laplace.hpp>
 #include <scalfmm/memory/storage.hpp>
-#include <xtensor/xio.hpp>
+#include <xtensor/io/xio.hpp>
 
 using namespace scalfmm;
 

@@ -27,9 +27,9 @@
 #include "scalfmm/container/point.hpp"
 
 #include "xtensor-blas/xblas.hpp"
-#include <xtensor/xarray.hpp>
-#include <xtensor/xbuilder.hpp>
-#include <xtensor/xtensor_forward.hpp>
+#include <xtensor/containers/xarray.hpp>
+#include <xtensor/generators/xbuilder.hpp>
+#include <xtensor/core/xtensor_forward.hpp>
 //
 //
 #include "scalfmm/algorithms/fmm.hpp"

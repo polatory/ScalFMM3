@@ -10,11 +10,11 @@
 //#include "xtensor-fftw/basic.hpp"
 //#include "xtensor-fftw/common.hpp"
 //#include "xtensor-fftw/xtensor-fftw_config.hpp"
-#include "xtensor/xarray.hpp"
-#include "xtensor/xcontainer.hpp"
-#include "xtensor/xsemantic.hpp"
-#include "xtensor/xstorage.hpp"
-#include "xtensor/xtensor_forward.hpp"
+#include "xtensor/containers/xarray.hpp"
+#include "xtensor/containers/xcontainer.hpp"
+#include "xtensor/core/xsemantic.hpp"
+#include "xtensor/containers/xstorage.hpp"
+#include "xtensor/core/xtensor_forward.hpp"
 #include "xtl/xcomplex.hpp"
 
 #include <fftw3.h>

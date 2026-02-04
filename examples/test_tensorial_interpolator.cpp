@@ -29,8 +29,8 @@
 #include <scalfmm/tree/leaf_view.hpp>
 #include <scalfmm/utils/math.hpp>
 
-#include <xtensor/xbuilder.hpp>
-#include <xtensor/xtensor.hpp>
+#include <xtensor/generators/xbuilder.hpp>
+#include <xtensor/containers/xtensor.hpp>
 
 auto main() -> int
 {

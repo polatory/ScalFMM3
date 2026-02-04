@@ -8,9 +8,9 @@
 #include "scalfmm/meta/utils.hpp"
 #include "scalfmm/options/options.hpp"
 
-#include "xtensor/xarray.hpp"
-#include "xtensor/xfixed.hpp"
-#include "xtensor/xtensor.hpp"
+#include "xtensor/containers/xarray.hpp"
+#include "xtensor/containers/xfixed.hpp"
+#include "xtensor/containers/xtensor.hpp"
 
 #include <array>
 #include <complex>

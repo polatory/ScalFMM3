@@ -7,10 +7,10 @@
 
 #include <xtensor-blas/xblas.hpp>
 #include <xtensor-blas/xblas_utils.hpp>
-#include <xtensor/xarray.hpp>
-#include <xtensor/xbuilder.hpp>
-#include <xtensor/xmanipulation.hpp>
-#include <xtensor/xview.hpp>
+#include <xtensor/containers/xarray.hpp>
+#include <xtensor/generators/xbuilder.hpp>
+#include <xtensor/misc/xmanipulation.hpp>
+#include <xtensor/views/xview.hpp>
 
 #include "scalfmm/interpolation/interpolator.hpp"
 #include "scalfmm/memory/storage.hpp"
