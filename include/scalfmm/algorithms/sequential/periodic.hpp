@@ -177,15 +177,16 @@ namespace scalfmm::algorithms::sequential::pass
         // the pass is decomposed in 2 steps 1)
         {
             using scalfmm::operators::m2l;
-            static constexpr int nbGridSize = math::pow(7, dimension);
-            std::array<cell_type*, nbGridSize> neighbors{};
-            std::array<int, nbGridSize> neighborPositions{};
+            auto separation_criterion{
+              interpolation::interpolator_traits<interpolator_type>::matrix_kernel_type::separation_criterion};
+            const int max_number_of_cells = 4 * separation_criterion + 3;
+            const int nbGridSize = math::pow(max_number_of_cells, dimension);
+            std::vector<cell_type*> neighbors(static_cast<std::size_t>(nbGridSize), nullptr);
+            std::vector<int> neighborPositions(static_cast<std::size_t>(nbGridSize));
             //
             auto buffer(interpolator.buffer_initialization());
             //
             int existing_neighbors{0};
-            auto separation_criterion{
-              interpolation::interpolator_traits<interpolator_type>::matrix_kernel_type::separation_criterion};
             int idxUpperLevel{2};
             //
             // lambda function to set the position of the cell
@@ -195,17 +196,18 @@ namespace scalfmm::algorithms::sequential::pass
                 if(((std::abs(is) > separation_criterion) || ...))
                 {
                     std::array<int, dimension> a{is...};
-                    neighbors[existing_neighbors] = &upper_cells[idxUpperLevel - 1];
-                    neighborPositions[existing_neighbors] = scalfmm::index::neighbor_index(a);
+                    neighbors[static_cast<std::size_t>(existing_neighbors)] = &upper_cells[idxUpperLevel - 1];
+                    neighborPositions[static_cast<std::size_t>(existing_neighbors)] =
+                      scalfmm::index::neighbor_index(a, separation_criterion);
                     ++existing_neighbors;
                 }
             };
             // STEP 1
             ////////////////////////////////////////////////////////////////////////////////////
             std::array<int, dimension> start, end;
-            // loop range [-3,3[^d
-            start.fill(-3);
-            end.fill(3);
+            // loop range [-(2*s+1), 2*s+1[^d where s is the separation criterion
+            start.fill(-(2 * separation_criterion + 1));
+            end.fill(2 * separation_criterion + 1);
             existing_neighbors = 0;
             // apply the lambda function on each element of the nested loop
             meta::looper_range<dimension>{}(fill_neighbors, start, end);
@@ -213,7 +215,8 @@ namespace scalfmm::algorithms::sequential::pass
             int cell_index{idxUpperLevel - 1};
             for(int index{0}; index < existing_neighbors; ++index)
             {
-                m2l(interpolator, upper_cells[cell_index], neighborPositions[index], upper_cells[cell_index],
+                m2l(interpolator, upper_cells[cell_index],
+                    neighborPositions[static_cast<std::size_t>(index)], upper_cells[cell_index],
                     idxUpperLevel, buffer);
             };
             /// post-processing the leaf if necessary
@@ -227,14 +230,15 @@ namespace scalfmm::algorithms::sequential::pass
             {
                 existing_neighbors = 0;   // reset the number of neighbors
                 cell_index = idxUpperLevel - 1;
-                // loop range [-2,4[^d
-                start.fill(-2);
-                end.fill(4);
+                // loop range [-(2*s), 2*s+2[^d
+                start.fill(-(2 * separation_criterion));
+                end.fill(2 * separation_criterion + 2);
                 meta::looper_range<dimension>{}(fill_neighbors, start, end);
                 //
                 for(int index{0}; index < existing_neighbors; ++index)
                 {   // same source cell
-                    m2l(interpolator, upper_cells[cell_index], neighborPositions[index], upper_cells[cell_index],
+                    m2l(interpolator, upper_cells[cell_index],
+                        neighborPositions[static_cast<std::size_t>(index)], upper_cells[cell_index],
                         idxUpperLevel, buffer);
                 };
                 /// post-processing the local expansion if necessary

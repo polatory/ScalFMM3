@@ -226,16 +226,12 @@ namespace scalfmm::component
         using morton_type = std::size_t;
         // the coordinate type to store the coordinate in the tree
         using coordinate_type = container::point<std::int64_t, component_type::dimension>;
-        // the number of interactions of the cell
-        static constexpr std::size_t number_of_interactions{math::pow(6, component_type::dimension) -
-                                                            math::pow(3, component_type::dimension)};
         // type of the array storing the indexes of the theoretical interaction list
-        using interaction_index_array_type = std::array<std::size_t, number_of_interactions>;
+        using interaction_index_array_type = std::vector<std::size_t>;
         // type of the array storing the linear position of the interaction.
-        using interaction_position_array_type =
-          std::array<typename coordinate_type::value_type, number_of_interactions>;
+        using interaction_position_array_type = std::vector<typename coordinate_type::value_type>;
         // type of the array storing the iterators to all the interacting cells
-        using iterator_array_type = std::array<typename group_type::iterator_type, number_of_interactions>;
+        using iterator_array_type = std::vector<typename group_type::iterator_type>;
         using iterator_type = typename iterator_array_type::value_type;
 
         // the level of the cell

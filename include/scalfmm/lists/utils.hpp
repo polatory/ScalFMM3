@@ -121,6 +121,7 @@ namespace scalfmm::list
         std::tie(component_symbolics.interaction_indexes, component_symbolics.interaction_positions,
                  component_symbolics.number_of_neighbors) =
           index::get_m2l_list(coordinate, tree_level, period, neighbour_separation);
+        component_symbolics.interaction_iterators.resize(component_symbolics.interaction_indexes.size());
     }
 
     /**
@@ -800,6 +801,7 @@ namespace scalfmm::list
           index::get_interaction_neighbors(t, coordinate, tree_level, period, neighbour_separation);
         component_symbolics.interaction_indexes = std::get<0>(interaction_neighbors);
         component_symbolics.number_of_neighbors = std::get<1>(interaction_neighbors);
+        component_symbolics.interaction_iterators.resize(component_symbolics.interaction_indexes.size());
         if(!source_target)
         {
             // case when source != target

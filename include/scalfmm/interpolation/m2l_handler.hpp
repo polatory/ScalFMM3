@@ -124,14 +124,15 @@ namespace scalfmm::interpolation
              * @brief
              *
              */
-            static constexpr std::size_t max_number_of_cell{7};
+            static constexpr std::size_t max_number_of_cell{std::size_t(4 * separation_criterion + 3)};
 
             /**
              * @brief
              *
              */
             static constexpr bool symmetry_support{
-              (symmetry_tag == matrix_kernels::symmetry::symmetric && (enable_symmetries == true) && (dimension < 4))};
+              (symmetry_tag == matrix_kernels::symmetry::symmetric && (enable_symmetries == true) && (dimension < 4) &&
+              (separation_criterion == 1))};
 
             using scale_factor_type = typename matrix_kernel_type::template vector_type<value_type>;
             using sym_permutations_type = std::conditional_t<symmetry_support, xt::xarray<int>, empty>;
@@ -1169,11 +1170,11 @@ namespace scalfmm::interpolation
                     }
                     else
                     {
-                        // loop range [-3,4[, ie range concept exclude the last value.
+                        // loop range [-(2*s+1), (2*s+2)[, where s is the separation criterion.
                         std::array<int, dimension> starts{};
                         std::array<int, dimension> stops{};
-                        starts.fill(-3);
-                        stops.fill(4);
+                        starts.fill(-(2 * separation_criterion + 1));
+                        stops.fill((2 * separation_criterion + 2));
                         // here we expand at compile time d loops of the range
                         // the indices of the d loops are input parameters of the lambda generate_all_interactions
                         meta::looper_range<dimension>{}(generate_all_interactions, starts, stops);

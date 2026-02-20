@@ -343,14 +343,15 @@ namespace scalfmm::index
     {
         container::point<CoordinateType, Dimension> coordinate{};
         auto tmp = idx;
+        const CoordinateType half_width = CoordinateType((nbNeigPerDim - 1) / 2);
         auto nbEltperDim = std::pow(nbNeigPerDim, Dimension);
         for(std::size_t d = 0; d < Dimension - 1; ++d)
         {
             nbEltperDim /= nbNeigPerDim;
-            coordinate[d] = CoordinateType(tmp / nbEltperDim) - 1;
-            tmp -= (coordinate[d] + 1) * nbEltperDim;
+            coordinate[d] = CoordinateType(tmp / nbEltperDim) - half_width;
+            tmp -= (coordinate[d] + half_width) * nbEltperDim;
         }
-        coordinate[Dimension - 1] = tmp - 1;
+        coordinate[Dimension - 1] = tmp - half_width;
 
         return coordinate;
     }
@@ -380,15 +381,14 @@ namespace scalfmm::index
     inline auto get_neighbors(container::point<CoordinateType, Dimension> const& coordinate, std::size_t level,
                               ArrayType const& period, int neighbor_separation)
     {
-        const std::size_t nbNeigPerDim = 3;
+        const std::size_t nbNeigPerDim = 2 * neighbor_separation + 1;
         using position_type = container::point<CoordinateType, Dimension>;
-        static constexpr CoordinateType interactions = math::pow(nbNeigPerDim, Dimension);
+        const CoordinateType interactions = math::pow(nbNeigPerDim, Dimension);
         const CoordinateType limite1d = static_cast<IndexType>(1) << (static_cast<CoordinateType>(level));
-        std::array<IndexType, interactions> indexes{};
-        std::array<position_type, interactions> idx_pos{};
+        std::vector<IndexType> indexes(interactions);
+        std::vector<position_type> idx_pos(interactions);
         int idx_neig = 0;
-        // We test all cells around
-        // As interactions is now 3^d --> th bound is interactions and not interactions+1
+
         for(CoordinateType idx = 0; idx < interactions; ++idx)
         {
             const auto idx_grid = get_grid_3x3_index<Dimension>(idx, nbNeigPerDim);
@@ -401,9 +401,9 @@ namespace scalfmm::index
             {
                 continue;
             }
+
             auto coord = coordinate + idx_grid;
             check = true;
-            // A mettre dans une fonction
             for(std::size_t d = 0; d < Dimension; ++d)
             {
                 if(period[d])
@@ -455,17 +455,12 @@ namespace scalfmm::index
     inline auto get_neighbors_new(container::point<CoordinateType, Dimension> const& coordinate, std::size_t level,
                                   ArrayType const& period, const bool true_pos, const int neighbour_separation)
     {
-        const int nbNeigPerDim = 3 /*2* neighbour_separation + 1 */;
+        const int nbNeigPerDim = 2 * neighbour_separation + 1;
         using position_type = container::point<CoordinateType, Dimension>;
-        // the right size od the array is  nbNeigPerDim = 2* neighbour_separation
-        // + 1  and not 3 !!! -1 because we don't consider the current box static
-        // const std::size_t interactions = math::pow(nbNeigPerDim, Dimension) -
-        // 1;
-        // static constexpr std::size_t interactions = math::pow(nbNeigPerDim, Dimension) - 1;
-        static constexpr CoordinateType interactions = math::pow(nbNeigPerDim, Dimension);
+        const CoordinateType interactions = math::pow(nbNeigPerDim, Dimension);
         const CoordinateType limite1d = static_cast<IndexType>(1) << (static_cast<CoordinateType>(level));
-        std::array<IndexType, interactions> indexes{};
-        std::array<position_type, interactions> idx_pos{};
+        std::vector<IndexType> indexes(interactions);
+        std::vector<position_type> idx_pos(interactions);
         int idx_neig = 0;
 
         // We test all cells around
@@ -515,22 +510,23 @@ namespace scalfmm::index
     }
 
     /**
-     * @brief
+     * @brief Get the index of an interaction neighbor for an arbitrary separation criterion.
      *
-     * @tparam Dimension
-     * @tparam CoordinateType
-     * @param p
-     * @return int
+     * The per-dimension offset range for M2L is [-(2*s+1), (2*s+1)] where s is the neighbor separation.
+     * This linearization maps that range to [0, 4*s+2] in each dimension.
      */
     template<std::size_t Dimension, typename CoordinateType = std::int64_t>
-    inline auto neighbor_index(std::array<CoordinateType, Dimension> const& p) -> int
+    inline auto neighbor_index(std::array<CoordinateType, Dimension> const& p, int neighbour_separation) -> int
     {
-        CoordinateType pos{p[0] + 3};
+        const CoordinateType shift = CoordinateType(2 * neighbour_separation + 1);
+        const CoordinateType base = CoordinateType(4 * neighbour_separation + 3);
+
+        CoordinateType pos{p[0] + shift};
         for(std::size_t d = 1; d < Dimension; ++d)
         {
-            pos = pos * 7 + p[d] + 3;
+            pos = pos * base + p[d] + shift;
         }
-        return pos;
+        return static_cast<int>(pos);
     }
 
     /**
@@ -559,14 +555,10 @@ namespace scalfmm::index
                              ArrayType const& period, const int neighbour_separation)
     {
         // neighbour_separation<< ")\n";
-        //        const int nbNeigPerDim = 6 /* 2*(2* neighbour_separation + 1 ) */;
         constexpr int nb_sons = math::pow(2, Dimension);
         using position_type = container::point<CoordinateType, Dimension>;
-        // the right size of the array is  nbNeigPerDim = 2* neighbour_separation
-        // + 1  and not 3 !!! -1 because we don't consider the current box static
-        // const std::size_t interactions = math::pow(nbNeigPerDim, Dimension) -
-        // math::pow(2*neighbour_separation + 1, Dimension) ;
-        static constexpr std::size_t interactions = math::pow(6, Dimension) - math::pow(3, Dimension);
+        const std::size_t interactions =
+          math::pow(2 * (2 * neighbour_separation + 1), Dimension) - math::pow(2 * neighbour_separation + 1, Dimension);
         //        const auto nbNeigPerDim_level = 2 * neighbour_separation + 1;
         bool is_periodic = false;
         for(std::size_t d = 0; d < Dimension; ++d)
@@ -575,8 +567,8 @@ namespace scalfmm::index
         }
         // number of cells in one dimension
         //
-        std::array<MortonIndex, interactions> indexes{};
-        std::array<CoordinateType, interactions> indexes_in_array{};
+        std::vector<MortonIndex> indexes(interactions);
+        std::vector<CoordinateType> indexes_in_array(interactions);
         // Compute the parent cell at level -1
         position_type parent_cell_coordinate{};
         meta::for_each(parent_cell_coordinate, coordinate, [](auto c) { return c >> 1; });
@@ -618,7 +610,7 @@ namespace scalfmm::index
                     //     pos = pos * 7 + diff[d] + 3;
                     // }
                     // indexes_in_array[idx_m2L_list] = pos;
-                    indexes_in_array[idx_m2L_list] = neighbor_index(diff);
+                    indexes_in_array[idx_m2L_list] = neighbor_index(diff, neighbour_separation);
                     ++idx_m2L_list;
                 }
             }
@@ -626,8 +618,8 @@ namespace scalfmm::index
         // We need to sort the indexes anf the permutation to reorder the position
         // mandatory
         {
-            std::array<std::pair<MortonIndex, int>, interactions> perm;
-            std::array<int, interactions> tmp{};
+            std::vector<std::pair<MortonIndex, int>> perm(interactions);
+            std::vector<int> tmp(interactions);
 
             for(int i{0}; i < idx_m2L_list; ++i)
             {
@@ -675,57 +667,6 @@ namespace scalfmm::index
     {
         return get_m2l_list(coordinate, level, period, neighbour_separtion);
     }
-
-    /**
-     * @brief Get the opposite inter index object
-     *
-     * @tparam Dimension
-     * @tparam IndexType
-     * @param index
-     * @return IndexType
-     */
-    template<std::size_t Dimension, typename IndexType>
-    inline auto get_opposite_inter_index(IndexType index) -> IndexType
-    {
-        static constexpr std::size_t i = math::pow(7, Dimension);
-        return static_cast<IndexType>(i) - index - IndexType(1);
-    }
-
-    /**
-     * @brief Get the opposite p2p inter index object
-     *
-     * @tparam Dimension
-     * @tparam IndexType
-     * @param index
-     * @return IndexType
-     */
-    template<std::size_t Dimension, typename IndexType>
-    inline auto get_opposite_p2p_inter_index(IndexType index) -> IndexType
-    {
-        static constexpr std::size_t i = math::pow(3, Dimension);
-        return static_cast<IndexType>(i) - index - IndexType(1);
-    }
-
-    // /// @ingroup get_interaction_neighbors
-    // /// @brief
-    // ///
-    // /// @tparam Dimension
-    // /// @tparam IndexType
-    // /// @tparam CoordinateType
-    // /// @param t
-    // /// @param coordinate
-    // /// @param tree_height
-    // /// @param neighbour_separtion
-    // ///
-    // /// @return
-    // // TODO fused the 2 functions !
-    // template<std::size_t Dimension, typename IndexType = std::size_t, typename CoordinateType = std::int64_t,
-    // typename Array> inline auto get_interaction_neighbors(operators::impl::tag_p2p t,
-    //                                       container::point<CoordinateType, Dimension> const& coordinate,
-    //                                       std::size_t leaf_level,  Array const & period, int neighbour_separtion = 1)
-    // {
-    //     return get_neighbors(coordinate, leaf_level, period, neighbour_separtion);
-    // }
 
     /**
      * @brief Get the interaction neighbors of the component located by its coordinate.

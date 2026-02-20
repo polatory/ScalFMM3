@@ -502,17 +502,15 @@ namespace scalfmm::component
         // the coordinate type to store the coordinate in the tree
         // using coordinate_type =
         //  decltype(index::get_coordinate_from_morton_index<component_type::dimension>(std::size_t{}));
-        // the number of interactions of the leaf
-        static constexpr std::size_t number_of_interactions{math::pow(3, component_type::dimension)};
         // type of the array storing the indexes of the theoretical interaction list
-        using interaction_index_array_type = std::array<std::size_t, number_of_interactions>;
+        using interaction_index_array_type = std::vector<std::size_t>;
         // type of the array storing the iterators of the interacting leaves available in the current group
         // using iterator_type = typename group_type::iterator_type;
         using seq_iterator_type =
           std::conditional_t<meta::exist_v<meta::inject<group_type>>, meta::exist_t<meta::inject<group_type>>,
                              std::tuple<typename group_type::iterator_type, group_type>>;
         using iterator_source_type = std::tuple_element_t<0, seq_iterator_type>;
-        using iterator_array_type = std::array<iterator_source_type, number_of_interactions>;
+        using iterator_array_type = std::vector<iterator_source_type>;
 
         /**
          * @brief the array storing the indexes of the theoretical interaction list.
