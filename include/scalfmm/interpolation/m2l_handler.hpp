@@ -29,15 +29,21 @@
 #include "xtensor/core/xvectorize.hpp"
 #include "xtensor/views/xview.hpp"
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 #include <algorithm>
 #include <any>
 #include <array>
 #include <cassert>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <iterator>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 using namespace scalfmm::io;
@@ -1129,35 +1135,13 @@ namespace scalfmm::interpolation
                     auto X_points = tensor::generate_grid_of_points<dimension>(
                       (half_width + half * local_cell_width_extension) * m_roots);
 
-                    // lambda for generation the matrixes corresponding to one interaction
+                    std::vector<std::pair<std::size_t, std::array<int, dimension>>> interactions;
                     std::size_t flat_idx{0};
-                    auto generate_all_interactions = [order, this, &interactions_matrices, &flat_idx, &X_points,
-                                                      current_width, number_of_interactions, l](auto... is)
+                    auto collect_interactions = [&interactions, &flat_idx](auto... is)
                     {
                         if(((std::abs(is) > separation_criterion) || ...))
                         {
-                            // constructing centers to generate Y
-                            xt::xarray<container::point<value_type, dimension>> centers(std::vector(dimension, order));
-                            xt::xarray<container::point<value_type, dimension>> Y_points(std::vector(dimension, order));
-
-                            // here we fill the centers with the current loop indexes
-                            // X_points is scaled with the width of cell so, Y_points will be scaled directly
-                            centers.fill(
-                              container::point<value_type, dimension>({(value_type(is) * current_width)...}));
-                            // then we calculate the Y points
-                            // TODO : add directly the point value_type here.
-                            Y_points = X_points + centers;
-
-                            // we get the ref of interaction matrices to generate
-                            auto& nm_fc_tensor = interactions_matrices.at(l * number_of_interactions + flat_idx);
-                            // and we generate each matrix needed for the product (kn*km matrices)
-                            for(std::size_t n = 0; n < kn; ++n)
-                            {
-                                for(std::size_t m = 0; m < km; ++m)
-                                {
-                                    nm_fc_tensor.at(n, m) = std::move(generate_matrix_k(X_points, Y_points, n, m));
-                                }
-                            }
+                            interactions.push_back({flat_idx, {static_cast<int>(is)...}});
                         }
                         ++flat_idx;
                     };
@@ -1165,7 +1149,7 @@ namespace scalfmm::interpolation
                     if constexpr(symmetry_support)
                     {
                         // we generate only the matrices in the positive cone of symmetries.
-                        meta::looper_symmetries<dimension>{}(generate_all_interactions);
+                        meta::looper_symmetries<dimension>{}(collect_interactions);
                     }
                     else
                     {
@@ -1175,8 +1159,62 @@ namespace scalfmm::interpolation
                         starts.fill(-3);
                         stops.fill(4);
                         // here we expand at compile time d loops of the range
-                        // the indices of the d loops are input parameters of the lambda generate_all_interactions
-                        meta::looper_range<dimension>{}(generate_all_interactions, starts, stops);
+                        // the indices of the d loops are input parameters of the lambda collect_interactions
+                        meta::looper_range<dimension>{}(collect_interactions, starts, stops);
+                    }
+
+                    auto generate_interaction = [order, this, &interactions_matrices, &interactions, &X_points,
+                                                 current_width, number_of_interactions,
+                                                 l](std::size_t interaction, size_type thread_id)
+                    {
+                        auto const& [interaction_idx, is] = interactions.at(interaction);
+                        // constructing centers to generate Y
+                        container::point<value_type, dimension> center;
+                        for(std::size_t d = 0; d < dimension; ++d)
+                        {
+                            center.at(d) = value_type(is.at(d)) * current_width;
+                        }
+                        xt::xarray<container::point<value_type, dimension>> centers(std::vector(dimension, order));
+                        centers.fill(center);
+                        // X_points is scaled with the width of cell so, Y_points will be scaled directly
+                        xt::xarray<container::point<value_type, dimension>> Y_points = X_points + centers;
+
+                        // we get the ref of interaction matrices to generate
+                        auto& nm_fc_tensor = interactions_matrices.at(l * number_of_interactions + interaction_idx);
+                        // and we generate each matrix needed for the product (kn*km matrices)
+                        for(std::size_t n = 0; n < kn; ++n)
+                        {
+                            for(std::size_t m = 0; m < km; ++m)
+                            {
+                                nm_fc_tensor.at(n, m) =
+                                  std::move(generate_matrix_k(X_points, Y_points, n, m, thread_id));
+                            }
+                        }
+                    };
+
+                    const auto n_interactions = static_cast<std::int64_t>(interactions.size());
+                    if constexpr(std::is_same_v<settings, options::fft_>)
+                    {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(dynamic)
+#endif
+                        for(std::int64_t interaction = 0; interaction < n_interactions; ++interaction)
+                        {
+#ifdef _OPENMP
+                            // The FFT-based interpolators hold one FFT plan per thread.
+                            const auto thread_id = static_cast<size_type>(omp_get_thread_num());
+#else
+                            const size_type thread_id{0};
+#endif
+                            generate_interaction(static_cast<std::size_t>(interaction), thread_id);
+                        }
+                    }
+                    else
+                    {
+                        for(std::int64_t interaction = 0; interaction < n_interactions; ++interaction)
+                        {
+                            generate_interaction(static_cast<std::size_t>(interaction), 0);
+                        }
                     }
 
                     // we divide the widths for the next tree level
