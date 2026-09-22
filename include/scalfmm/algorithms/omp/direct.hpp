@@ -15,7 +15,10 @@
 #include "scalfmm/operators/p2p.hpp"
 #include "scalfmm/operators/tags.hpp"
 
+#include <algorithm>
 #include <tuple>
+#include <unordered_map>
+#include <vector>
 
 namespace scalfmm::algorithms::omp::pass
 {
@@ -61,39 +64,65 @@ namespace scalfmm::algorithms::omp::pass
         const auto prio_small{priorities::p2p_small};
         if(mutual)
         {
-            // First perform out_of_group interaction in mutual kernel
-            while(begin_groups != end_groups)
+            using group_type = typename TreeType::group_of_leaf_type;
+            struct out_of_group_task
             {
+                group_type* group;
+                group_type* other_group;
+                std::size_t first_out_interaction;
+                std::size_t last_out_interaction;
+                std::size_t color;
+            };
+            std::vector<out_of_group_task> out_of_group_tasks;
+            std::unordered_map<group_type*, std::vector<bool>> used_colors;
+            for(auto group_it = begin_groups; group_it != end_groups; ++group_it)
+            {
+                group_type* group = group_it->get();
                 std::size_t current_out_interaction{0};
-                std::size_t first_out_interaction{0};
-                std::size_t last_out_interaction{0};
-                // auto const& outside_interactions = (*begin_groups)->csymbolics().outside_interactions;
-                auto const& group_dependencies = (*begin_groups)->csymbolics().group_dependencies;
-                const auto current_group_ptr_particles = (*begin_groups).get()->depends_update();
-                //
-                // Loop on the pointer of other groups involved in the interactions with the current group
-                auto const& sym_g = (*begin_groups)->csymbolics();
-                ///
-                for(auto& other_group_ptr_part: group_dependencies)
+                auto const& sym_g = group->csymbolics();
+                for(auto& other_group_ptr_part: sym_g.group_dependencies)
                 {
+                    std::size_t first_out_interaction{0};
+                    std::size_t last_out_interaction{0};
                     std::tie(first_out_interaction, last_out_interaction) = list::get_outside_interaction_range(
                       sym_g, other_group_ptr_part->csymbolics(), current_out_interaction);
+                    current_out_interaction = last_out_interaction;
 
-                    const auto other_group_ptr_particles = other_group_ptr_part->depends_update();
-                    // clang-format off
-#pragma omp task untied default(none) shared(period, box_width, matrix_kernel) firstprivate(begin_groups, \
+                    auto& colors_g = used_colors[group];
+                    auto& colors_o = used_colors[other_group_ptr_part];
+                    std::size_t color{0};
+                    while((color < colors_g.size() && colors_g.at(color)) ||
+                          (color < colors_o.size() && colors_o.at(color)))
+                    {
+                        ++color;
+                    }
+                    colors_g.resize(std::max(colors_g.size(), color + 1));
+                    colors_o.resize(std::max(colors_o.size(), color + 1));
+                    colors_g.at(color) = true;
+                    colors_o.at(color) = true;
+                    out_of_group_tasks.push_back(
+                      {group, other_group_ptr_part, first_out_interaction, last_out_interaction, color});
+                }
+            }
+            std::stable_sort(out_of_group_tasks.begin(), out_of_group_tasks.end(),
+                             [](auto const& a, auto const& b) { return a.color < b.color; });
+
+            for(auto const& task: out_of_group_tasks)
+            {
+                const auto group = task.group;
+                const auto current_group_ptr_particles = group->depends_update();
+                const auto other_group_ptr_particles = task.other_group->depends_update();
+                const auto first_out_interaction = task.first_out_interaction;
+                const auto last_out_interaction = task.last_out_interaction;
+                // clang-format off
+#pragma omp task untied default(none) shared(period, box_width, matrix_kernel) firstprivate(group, \
   current_group_ptr_particles, other_group_ptr_particles, first_out_interaction, last_out_interaction)    \
   depend(inout  : current_group_ptr_particles[0], other_group_ptr_particles[0]) priority(prio_small)
-                    // clang-format on
-                    {
-                        // Get for each previous group the indices range of interacting components and apply the
-                        // operator between them.
-                        operators::apply_out_of_group_p2p(**begin_groups, first_out_interaction, last_out_interaction,
-                                                          matrix_kernel, period, box_width);
-                    }
-                    current_out_interaction = last_out_interaction;
+                // clang-format on
+                {
+                    operators::apply_out_of_group_p2p(*group, first_out_interaction, last_out_interaction,
+                                                      matrix_kernel, period, box_width);
                 }
-                ++begin_groups;
             }
         }
         //
