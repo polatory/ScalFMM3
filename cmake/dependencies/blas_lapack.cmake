@@ -13,10 +13,6 @@ if(${CMAKE_PROJECT_NAME}_USE_MKL)
     find_package(MKL CONFIG REQUIRED)
     list(APPEND FUSE_LIST CBLAS)
     set(CBLAS_FOUND TRUE)
-    set_target_properties(MKL::MKL PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES
-        "${MKL_ROOT}/include;${MKL_ROOT}/include/fftw"
-    )
     list(APPEND CBLAS_TARGET MKL::MKL)
 else()
     cmake_print_variables(BLA_VENDOR)

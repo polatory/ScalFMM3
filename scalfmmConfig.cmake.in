@@ -33,10 +33,6 @@ else()
           set(MKL_LINK dynamic)
           set(MKL_THREADING sequential)
           find_dependency(MKL)
-          set_target_properties(MKL::MKL PROPERTIES
-                  INTERFACE_INCLUDE_DIRECTORIES
-                  "${INTERN_MKL_ROOT}/include;${INTERN_MKL_ROOT}/include/fftw"
-          )
           set(BLAS_FOUND TRUE)
         else()
             set(ENV{MKLROOT} ${INTERN_MKL_ROOT})
@@ -45,21 +41,19 @@ else()
           if(DEFINED BLAS_FOUND)
               set_target_properties(BLAS::BLAS PROPERTIES
                   INTERFACE_INCLUDE_DIRECTORIES
-                  "${INTERN_MKL_ROOT}/include;${INTERN_MKL_ROOT}/include/fftw"
+                  "${INTERN_MKL_ROOT}/include"
                   )
           elseif()
               message(FATAL_ERROR "CBLAS required, not found!")
           endif()
         endif()
       elseif("${lib}" STREQUAL "FFTW")
-        if(NOT "@BLA_VENDOR@" STREQUAL "Intel10_64lp_seq")
-          find_package(PkgConfig REQUIRED)
-          pkg_search_module(FFTW REQUIRED fftw3 IMPORTED_TARGET)
-          pkg_search_module(FFTWF REQUIRED fftw3f IMPORTED_TARGET)
-          set(FFTW_FOUND TRUE)
-        elseif("@BLA_VENDOR@" STREQUAL "Intel10_64lp_seq" AND BLAS_FOUND)
-          set(FFTW_FOUND TRUE)
+        find_path(POCKETFFT_INCLUDE_DIR pocketfft_hdronly.h REQUIRED)
+        if(NOT TARGET pocketfft::pocketfft)
+          add_library(pocketfft::pocketfft INTERFACE IMPORTED)
+          target_include_directories(pocketfft::pocketfft INTERFACE ${POCKETFFT_INCLUDE_DIR})
         endif()
+        set(FFTW_FOUND TRUE)
       else()
         find_dependency(${lib})
       endif()

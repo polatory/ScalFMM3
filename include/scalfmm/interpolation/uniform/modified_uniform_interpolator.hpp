@@ -27,7 +27,7 @@
 #include "scalfmm/meta/utils.hpp"
 #include "scalfmm/simd/memory.hpp"
 #include "scalfmm/simd/utils.hpp"
-#include "scalfmm/utils/fftw.hpp"
+#include "scalfmm/utils/fft.hpp"
 #include "scalfmm/utils/math.hpp"
 #include "scalfmm/utils/tensor.hpp"
 
@@ -101,12 +101,12 @@ namespace scalfmm::interpolation
                 {
                     fft_handler.resize(omp_get_num_threads());
                 }
-                fft_handler.at(omp_get_thread_num()) = new fftw::fft<value_type, dimension>();
+                fft_handler.at(omp_get_thread_num()) = new fft::fft<value_type, dimension>();
                 fft_handler.at(omp_get_thread_num())->initialize(order);
             }
 #else
             fft_handler.resize(1);
-            fft_handler.at(0) = new fftw::fft<value_type, dimension>();
+            fft_handler.at(0) = new fft::fft<value_type, dimension>();
             fft_handler.at(0)->initialize(order);
 #endif
             base_interpolator_type::initialize();
@@ -335,7 +335,7 @@ namespace scalfmm::interpolation
         int d_;
         std::vector<value_type> m_roots;
         std::vector<value_type> m_weights;
-        std::vector<fftw::fft<value_type, dimension>*> fft_handler;
+        std::vector<fft::fft<value_type, dimension>*> fft_handler;
     };
 
     // traits class to register types inside the interpolator generic class
